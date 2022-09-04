@@ -13,9 +13,9 @@ class Button:
 
 		self.size = size
 
-	def action(self, gf):
+	def action(self, gf, main):
 		if self.name == 'start_battle':
-			gf.start_battle()
+			main.start_battle(gf)
 
 
 class Wall:
@@ -61,13 +61,16 @@ class Tank:
 		self.rect.x = position[0]
 		self.rect.y = position[1]
 
+		self.shoot_speed = FPS
+		self.shoot_iteration = self.shoot_speed
+
 		self.speed = TANK_SPEED
 
 		self.alive = True
 		self.death_animation_speed = FPS // 2
 		self.death_animation_iteration = 0
 
-	def move(self, gf, rotation):
+	def move(self, map_objects, rotation):
 		self.image = self.images[rotation]
 		self.rotation = rotation
 
@@ -75,7 +78,7 @@ class Tank:
 			if self.rect.y - self.speed >= 0:
 				self.rect.y -= self.speed
 			else: return
-			for obj in gf.map_objects:
+			for obj in map_objects:
 				if obj.__class__.__name__ == 'Wall' or obj.__class__.__name__ == 'River':
 					if obj.rect.colliderect(self.rect):
 						self.rect.y += self.speed
@@ -84,7 +87,7 @@ class Tank:
 			if self.rect.y + self.speed <= HEIGHT - TANK_SIZE[1]:
 				self.rect.y += self.speed
 			else: return
-			for obj in gf.map_objects:
+			for obj in map_objects:
 				if obj.__class__.__name__ == 'Wall' or obj.__class__.__name__ == 'River':
 					if obj.rect.colliderect(self.rect):
 						self.rect.y -= self.speed
@@ -93,7 +96,7 @@ class Tank:
 			if self.rect.x + self.speed <= WIDTH - TANK_SIZE[0]:
 				self.rect.x += self.speed
 			else: return
-			for obj in gf.map_objects:
+			for obj in map_objects:
 				if obj.__class__.__name__ == 'Wall' or obj.__class__.__name__ == 'River':
 					if obj.rect.colliderect(self.rect):
 						self.rect.x -= self.speed
@@ -102,11 +105,17 @@ class Tank:
 			if self.rect.x - self.speed >= 0:
 				self.rect.x -= self.speed
 			else: return
-			for obj in gf.map_objects:
+			for obj in map_objects:
 				if obj.__class__.__name__ == 'Wall' or obj.__class__.__name__ == 'River':
 					if obj.rect.colliderect(self.rect):
 						self.rect.x += self.speed
 						return
+
+	def update(self, x, y, rotation):
+		self.image = self.images[rotation]
+		self.rotation = rotation
+		self.rect.x = x
+		self.rect.y = y
 
 
 

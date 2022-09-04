@@ -54,6 +54,11 @@ def init():
 				"right":pygame.transform.scale(pygame.image.load('sprites/green_tank/tank_right.png'), TANK_SIZE),
 				"left":pygame.transform.scale(pygame.image.load('sprites/green_tank/tank_left.png'), TANK_SIZE),}
 
+	RED_TANK = {"back":pygame.transform.scale(pygame.image.load('sprites/red_tank/tank_back.png'), TANK_SIZE),
+				"forward":pygame.transform.scale(pygame.image.load('sprites/red_tank/tank_forward.png'), TANK_SIZE),
+				"right":pygame.transform.scale(pygame.image.load('sprites/red_tank/tank_right.png'), TANK_SIZE),
+				"left":pygame.transform.scale(pygame.image.load('sprites/red_tank/tank_left.png'), TANK_SIZE),}
+
 	BULLET = {"back":pygame.transform.scale(pygame.image.load('sprites/bullet/shot_back.png'), SHOT_SIZE),
 				"forward":pygame.transform.scale(pygame.image.load('sprites/bullet/shot_forward.png'), SHOT_SIZE),
 				"right":pygame.transform.scale(pygame.image.load('sprites/bullet/shot_right.png'), SHOT_SIZE),

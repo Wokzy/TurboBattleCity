@@ -1,6 +1,6 @@
 import pickle
 
-
+ENCODING = 'utf-8'
 
 try:
 	with open('config.bin', 'rb') as f:

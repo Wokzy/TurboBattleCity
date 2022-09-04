@@ -1,6 +1,8 @@
 
+# w wall, r river, g grass, s spawn, 1 team one spawn, 2 team two spawn
+
 LEVEL_1 =\
-		['  ww w         w',\
+		['s ww w         w',\
 		 '       rrr     w',\
 		 ' w rr r        w',\
 		 '                ',\
@@ -14,7 +16,7 @@ LEVEL_1 =\
 		 'w g            w',\
 		 'w               ',\
 		 '      rrrr    w ',\
-		 ' p            w ',]
+		 ' s            w ',]
 
 
 
