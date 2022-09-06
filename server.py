@@ -1,8 +1,9 @@
 import socket, select, time, json, utils, random, sha256_hashsummer
+from constants import SERVER_PORT, SERVER_IP
 from datetime import datetime
 
 sock = socket.socket()
-sock.bind(('192.168.1.23', 25215))
+sock.bind((SERVER_IP, SERVER_PORT))
 sock.listen(5)
 inputs = [sock]
 outputs = []
@@ -32,7 +33,13 @@ while inputs:
 			unconfirmed_connections[addr] = random.randint(1, 10**10)
 			print(f'{addr} is connected')
 		else:
-			data = s.recv(1024)
+			try:
+				data = s.recv(1024)
+			except:
+				if s in outputs:
+					outputs.remove(s)
+				inputs.remove(s)
+				continue
 
 			if data:
 				#print(f'Recieved {data.decode("utf-8")} | from {s.getpeername()[0]}:{s.getpeername()[1]}')
@@ -103,7 +110,7 @@ while inputs:
 			else:
 				s.send(utils.prepare_object_to_sending('overflowed'))
 		elif 'player_data' in players_data[s]:
-			#print('aaa')
+			#print(players_data[s])
 			players_data[s] = json.loads(players_data[s])
 			sessions[players_data[s]['session_id']]['players_data'][s] = players_data[s]['player_data']
 			sessions[players_data[s]['session_id']]['players_data'][s]['address'] = f"{s.getpeername()[0]}:{s.getpeername()[1]}" # ip:port

@@ -11,11 +11,11 @@ LEVEL_1 =\
 		 '           gggg ',\
 		 '    w wr gg     ',\
 		 '       gggg  rrr',\
-		 'w   gggrg       ',\
+		 'w   gggrg    s  ',\
 		 'w  gg          g',\
 		 'w g            w',\
 		 'w               ',\
-		 '      rrrr    w ',\
+		 '      rrrr  s w ',\
 		 ' s            w ',]
 
 

@@ -6,14 +6,12 @@ from datetime import datetime
 pygame.init()
 pygame.font.init()
 
-
-GAME_NAME = 'Turbo Batlle City'
-GAME_VERSION = '1.0'
-
 class Main:
 	def __init__(self, gf):
 		self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
 		pygame.display.set_caption(GAME_NAME)
+
+		self.init_fonts()
 
 		self.clock = pygame.time.Clock()
 		self.iterations = 0 # Game iterations
@@ -22,7 +20,7 @@ class Main:
 		self.rotations = ['forward']*10
 
 
-		self.server = ('192.168.1.23', 25215) #192.168.0.181
+		self.server = (SERVER_IP, SERVER_PORT) # from constants
 		self.connect()
 
 		while True:
@@ -46,6 +44,12 @@ class Main:
 		self.server_update_time = .03125 # 32 tick rate, .015625 - 64
 		self.server_update_timer = datetime.now()
 
+	def init_fonts(self):
+		self.info_font = pygame.font.SysFont(GAME_FONT, INFO_FONT_SIZE)
+		self.nickname_font = pygame.font.SysFont(GAME_FONT, NICK_FONT_SIZE)
+		self.score_font = pygame.font.SysFont(GAME_FONT, SCORE_FONT_SIZE)
+		self.score_font_colors = [(180, 25, 25), (25, 180, 25), (25, 25, 180),]
+
 	def start_battle(self, gf, connection_info):
 
 		gf.level = connection_info['level']
@@ -54,8 +58,9 @@ class Main:
 
 		self.player_idx = connection_info['player_idx']
 		gf.player = objects.Tank(True, self.positions[self.player_idx], self.rotations[self.player_idx])
+		gf.nickname = self.nickname_font.render(gf.nickname, False, (255, 255, 255))
 
-		self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status}
+		#self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status}
 
 	def main(self, gf):
 		#gf.start_battle()
@@ -86,7 +91,9 @@ class Main:
 
 		if gf.game_status == 1:
 			gf.update_battle()
-			self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.shouted)}
+			self.scores = [(self.score_font.render(f'{gf.score}', False, (255, 255, 255)), (self.info_font.render(f'{gf.nickname}', False, (255, 255, 255))))]
+			self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.shouted),
+								"nickname":gf.nickname_string, "score":gf.score}
 
 			rm_lst = []
 			for bullet in gf.bullets:
@@ -124,11 +131,17 @@ class Main:
 					rot = player['rotation']
 					status = player['status']
 					shouted = player['shouted']
+					nickname = player['nickname']
+					score = player['score']
+
+					self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
+										(self.info_font.render(nickname, False, (255, 255, 255)))))
 
 					if addr in gf.players:
-						gf.players[addr].update(x, y, rot)
+						gf.players[addr].update(x, y, rot, score)
 					else:
 						gf.players[addr] = objects.Tank(False, (x, y), rot)
+						gf.players[addr].nickname = self.info_font.render(self.nickname_font, False, (255, 255, 255))
 
 					if shouted:
 						gf.shoot(gf.players[addr])
@@ -179,6 +192,14 @@ class Main:
 		if self.iterations == 3628800: # 3628800 = !10
 			self.iterations = 0
 
+	def blit_grass(self):
+		for obj in gf.grass:
+			self.screen.blit(obj.image, obj.rect)
+
+	def blit_map(self, preview=[]):
+		for obj in gf.map_objects + preview:
+			self.screen.blit(obj.image, obj.rect)
+
 	def blit_objects(self, gf):
 		for obj in gf.additional_objects:
 			self.screen.blit(obj.image, obj.rect)
@@ -186,18 +207,20 @@ class Main:
 		if gf.game_status == 1:
 			try:
 				self.screen.blit(gf.player.image, gf.player.rect)
+				self.screen.blit(gf.nickname, (gf.player.rect.x, gf.player.rect.y - 6*AVERAGE_MULTIPLYER))
 			except: pass
 			for player in gf.players:
 				self.screen.blit(gf.players[player].image, gf.players[player].rect)
+				self.screen.blit(gf.player[player].nickname, (gf.players[player].rect.x, gf.players[player].rect.y - 6*AVERAGE_MULTIPLYER))
 
-			for obj in gf.map_objects:
-				self.screen.blit(obj.image, obj.rect)
+			self.blit_map()
 
 			for bullet in gf.bullets:
 				self.screen.blit(bullet.image, bullet.rect)
 
-			for obj in gf.grass:
-				self.screen.blit(obj.image, obj.rect)
+			self.blit_grass()
+
+			#self.blit_text()
 
 	def event_update(self):
 		pressed_keys = pygame.key.get_pressed()
@@ -260,5 +283,6 @@ class Main:
 
 
 if __name__ == '__main__':
+	print(GAME_NAME, GAME_VERSION)
 	gf = GameFunctions.GameFunctions()
 	Main(gf).main(gf)

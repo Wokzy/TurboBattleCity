@@ -111,16 +111,17 @@ class Tank:
 						self.rect.x += self.speed
 						return
 
-	def update(self, x, y, rotation):
+	def update(self, x, y, rotation, score=0):
 		self.image = self.images[rotation]
 		self.rotation = rotation
 		self.rect.x = x
 		self.rect.y = y
+		self.score = score
 
 
 
 class Bullet:
-	def __init__(self, rotation, position):
+	def __init__(self, rotation, position, shooter=None):
 		self.image = images.get_bullet()[rotation]
 		self.rotation = rotation
 
@@ -129,6 +130,7 @@ class Bullet:
 		self.rect.y = position[1]
 
 		self.speed = BULLET_SPEED
+		self.shooter = shooter
 
 	def update(self):
 		if self.rotation == "forward":

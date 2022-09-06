@@ -6,18 +6,18 @@ from scripts import objects, maps
 
 class GameFunctions:
 	def __init__(self, level=1):
-		self.additional_objects = []
-		self.players = {}
-		self.bullets = []
-		self.added_bullets = []
-		self.grass = []
+		self.init_game_objects()
 
 		self.shoot_speed = FPS
 		self.shoot_iteration = self.shoot_speed
 
+		self.nickname_string = NICKNAME
+		self.nickname = NICKNAME
 		self.player = None
 		self.player_status = 'default'
 		self.shouted = False
+
+		self.score = 0
 
 		self.level = level
 
@@ -28,6 +28,14 @@ class GameFunctions:
 
 		self.adding_enemyes_speed = FPS * 1
 		self.adding_enemyes_iteration = 0
+
+	def init_game_objects(self):
+		self.additional_objects = []
+		self.map_objects = []
+		self.players = {}
+		self.bullets = []
+		self.added_bullets = []
+		self.grass = []
 
 
 	def main_menu_update(self, socket = None, get_information = None):
@@ -81,19 +89,12 @@ class GameFunctions:
 	def init_optimization(self):
 		self.main_menu_on = False
 
-	def start_battle(self):
-		self.game_status = 1
-		#self.max_enemyes = self.level + 5
-		#self.enemyes = []
-		self.additional_objects = []
-
-		self.map_objects = []
-
+	def render_map(self, level):
 		spawns = []
 
-		for line in maps.LEVELS[self.level]:
+		for line in maps.LEVELS[level]:
 			for obj in range(len(line)):
-				crds = (obj*25*AVERAGE_MULTIPLYER, maps.LEVELS[self.level].index(line)*25*AVERAGE_MULTIPLYER)
+				crds = (obj*25*AVERAGE_MULTIPLYER, maps.LEVELS[level].index(line)*25*AVERAGE_MULTIPLYER)
 				if line[obj] == 'w':
 					self.map_objects.append(objects.Wall(crds))
 				elif line[obj] == 'r':
@@ -104,6 +105,15 @@ class GameFunctions:
 					spawns.append(crds)
 
 		return spawns
+
+	def start_battle(self):
+		self.init_game_objects()
+		self.game_status = 1
+		self.score = 0
+		#self.max_enemyes = self.level + 5
+		#self.enemyes = []
+
+		return self.render_map(self.level)
 
 	def stop_battle(self):
 		self.game_status = 0
@@ -125,10 +135,18 @@ class GameFunctions:
 
 	def shoot(self, tank):
 		if tank.rotation == 'forward':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y - 8*AVERAGE_MULTIPLYER)))
+			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y - 8*AVERAGE_MULTIPLYER), shooter=tank))
 		elif tank.rotation == 'back':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y + 15*AVERAGE_MULTIPLYER)))
+			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y + 15*AVERAGE_MULTIPLYER), shooter=tank))
 		elif tank.rotation == 'right':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x + 15*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER)))
+			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x + 15*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER), shooter=tank))
 		elif tank.rotation == 'left':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x - 8*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER)))
+			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x - 8*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER), shooter=tank))
+
+	def change_nickname(self, new_nick):
+		self.nickname_string = new_nick[:12:]
+		f = open(CONFIG_FILE)
+		data = json.load(f)
+		f.close()
+		data['NICKNAME'] = new_nick
+		json.dump(data, CONFIG_FILE)
