@@ -45,9 +45,9 @@ class Main:
 		self.server_update_timer = datetime.now()
 
 	def init_fonts(self):
-		self.info_font = pygame.font.SysFont(GAME_FONT, INFO_FONT_SIZE)
-		self.nickname_font = pygame.font.SysFont(GAME_FONT, NICK_FONT_SIZE)
-		self.score_font = pygame.font.SysFont(GAME_FONT, SCORE_FONT_SIZE)
+		self.info_font = pygame.font.Font(GAME_FONT, INFO_FONT_SIZE)
+		self.nickname_font = pygame.font.Font(GAME_FONT, NICK_FONT_SIZE)
+		self.score_font = pygame.font.Font(GAME_FONT, SCORE_FONT_SIZE)
 		self.score_font_colors = [(180, 25, 25), (25, 180, 25), (25, 25, 180),]
 
 	def start_battle(self, gf, connection_info):
@@ -58,7 +58,7 @@ class Main:
 
 		self.player_idx = connection_info['player_idx']
 		gf.player = objects.Tank(True, self.positions[self.player_idx], self.rotations[self.player_idx])
-		gf.nickname = self.nickname_font.render(gf.nickname, False, (255, 255, 255))
+		gf.nickname = self.nickname_font.render(gf.nickname_string, False, (255, 255, 255))
 
 		#self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status}
 
@@ -91,7 +91,6 @@ class Main:
 
 		if gf.game_status == 1:
 			gf.update_battle()
-			self.scores = [(self.score_font.render(f'{gf.score}', False, (255, 255, 255)), (self.info_font.render(f'{gf.nickname}', False, (255, 255, 255))))]
 			self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.shouted),
 								"nickname":gf.nickname_string, "score":gf.score}
 
@@ -111,6 +110,8 @@ class Main:
 				for player in gf.players:
 					if bullet.rect.colliderect(gf.players[player].rect):
 						gf.players[player].alive = False
+						if bullet.shooter == gf.player:
+							gf.score += 1
 						rm_lst.append(bullet)
 						break
 
@@ -124,6 +125,8 @@ class Main:
 				players_info = self.get_information()
 				#print('info got')
 
+				self.scores = [(self.score_font.render(f'{gf.score}', False, (255, 255, 255)), (self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255))))]
+
 				for player in players_info:
 					addr = player['address']
 					x = player['x']
@@ -132,7 +135,7 @@ class Main:
 					status = player['status']
 					shouted = player['shouted']
 					nickname = player['nickname']
-					score = player['score']
+					score = str(player['score'])
 
 					self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
 										(self.info_font.render(nickname, False, (255, 255, 255)))))
@@ -141,7 +144,8 @@ class Main:
 						gf.players[addr].update(x, y, rot, score)
 					else:
 						gf.players[addr] = objects.Tank(False, (x, y), rot)
-						gf.players[addr].nickname = self.info_font.render(self.nickname_font, False, (255, 255, 255))
+						gf.players[addr].nickname = self.nickname_font.render(nickname, False, (255, 255, 255))
+						gf.players[addr].show_nickname = True
 
 					if shouted:
 						gf.shoot(gf.players[addr])
@@ -151,9 +155,11 @@ class Main:
 				self.server_update_timer = datetime.now()
 
 			if gf.player != None:
+				gf.player.show_nickname = True
 				for obj in gf.grass:
 					if obj.rect.colliderect(gf.player.rect):
 						obj.image = obj.images['transparent']
+						gf.player.show_nickname = False
 					else:
 						obj.image = obj.images['filled']
 
@@ -170,6 +176,13 @@ class Main:
 			rm_lst = []
 
 			for player in gf.players:
+				if gf.players[player] != None:
+					gf.players[player].show_nickname = True
+					for obj in gf.grass:
+						if obj.rect.colliderect(gf.players[player].rect):
+							gf.players[player].show_nickname = False
+							break
+
 				if gf.players[player] != None and gf.players[player].alive == False:
 					gf.players[player].death_animation_iteration += 1
 					if gf.players[player].death_animation_iteration <= gf.players[player].death_animation_speed:
@@ -178,6 +191,8 @@ class Main:
 						rm_lst.append(player)
 					else:
 						gf.players[player].image = gf.players[player].death_images[1]
+
+				# TODO GRASS NICKNAMES
 
 			for obj in rm_lst:
 				del gf.players[obj]
@@ -200,24 +215,35 @@ class Main:
 		for obj in gf.map_objects + preview:
 			self.screen.blit(obj.image, obj.rect)
 
+	def blit_scores(self):
+		for i in range(len(self.scores)):
+			score_coords = (WIDTH // 2 - ((SCORE_FONT_SIZE)*(len(self.scores) - 1) // 2) - SCORE_FONT_SIZE*.5 + (SCORE_FONT_SIZE + SCORE_FONT_SIZE*0.25)*i, AVERAGE_MULTIPLYER)
+			nick_coords = (score_coords[0], score_coords[1] + SCORE_FONT_SIZE + AVERAGE_MULTIPLYER)
+
+			self.screen.blit(self.scores[i][0], score_coords)
+			self.screen.blit(self.scores[i][1], nick_coords)
+
 	def blit_objects(self, gf):
 		for obj in gf.additional_objects:
 			self.screen.blit(obj.image, obj.rect)
 
 		if gf.game_status == 1:
+			self.blit_map()
+
 			try:
 				self.screen.blit(gf.player.image, gf.player.rect)
-				self.screen.blit(gf.nickname, (gf.player.rect.x, gf.player.rect.y - 6*AVERAGE_MULTIPLYER))
+				if gf.player.show_nickname:
+					self.screen.blit(gf.nickname, (gf.player.rect.x, gf.player.rect.y - 8*AVERAGE_MULTIPLYER))
 			except: pass
 			for player in gf.players:
 				self.screen.blit(gf.players[player].image, gf.players[player].rect)
-				self.screen.blit(gf.player[player].nickname, (gf.players[player].rect.x, gf.players[player].rect.y - 6*AVERAGE_MULTIPLYER))
-
-			self.blit_map()
+				if gf.players[player].show_nickname:
+					self.screen.blit(gf.players[player].nickname, (gf.players[player].rect.x, gf.players[player].rect.y - 8*AVERAGE_MULTIPLYER))
 
 			for bullet in gf.bullets:
 				self.screen.blit(bullet.image, bullet.rect)
 
+			self.blit_scores()
 			self.blit_grass()
 
 			#self.blit_text()

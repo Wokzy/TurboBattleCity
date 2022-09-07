@@ -45,7 +45,8 @@ class GameFunctions:
 			self.additional_objects.append(objects.Button('start_battle', images.get_start_button(), (WIDTH//2 - START_BUTTON_SIZE[0]//2, HEIGHT//2 - START_BUTTON_SIZE[1]//2), START_BUTTON_SIZE))
 			if socket:
 				while True:
-					options = '1 - show sessions\n' + '2 - create session\n' + '3 - connect to session\n' + '4 - leave\n'
+					print(f'Your nickname is: {self.nickname_string}\n')
+					options = '1 - show sessions\n' + '2 - create session\n' + '3 - connect to session\n' + '4 - change nickname\n' + '0 - leave\n'
 					ch = input(options)
 
 					socket.send('get_sessions_info'.encode(ENCODING))
@@ -82,6 +83,8 @@ class GameFunctions:
 							else:
 								return res
 					elif ch == '4':
+						self.change_nickname(input('Enter new nickname -> '))
+					elif ch == '0':
 						return 'leave'
 
 
@@ -145,8 +148,10 @@ class GameFunctions:
 
 	def change_nickname(self, new_nick):
 		self.nickname_string = new_nick[:12:]
-		f = open(CONFIG_FILE)
+		f = open(CONFIG_FILE, 'r')
 		data = json.load(f)
 		f.close()
 		data['NICKNAME'] = new_nick
-		json.dump(data, CONFIG_FILE)
+		f = open(CONFIG_FILE, 'w')
+		json.dump(data, f)
+		f.close()
