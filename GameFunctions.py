@@ -62,7 +62,7 @@ class GameFunctions:
 						while True:
 							try:
 								session = {'level':min(max(int(input(f'Enter level from 0 to {len(maps.LEVELS)-1} -> ')), 0), len(maps.LEVELS)-1), 
-											'max_players':10}
+											'max_players':min(max(int(input(f'Max players (2-8) -> ')), 2), MAX_PLAYERS_ON_MAP)}
 								break
 							except Exception as e:
 								print(e)
