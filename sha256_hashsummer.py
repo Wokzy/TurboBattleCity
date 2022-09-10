@@ -24,7 +24,7 @@ def sum_files_with_extention(extentions=['.py', '.png'], dirs=[], solt=0):
 	dirs.sort()
 
 	for add_dir in dirs:
-		for file in os.listdir(add_dir):
+		for file in sorted(os.listdir(add_dir)):
 			for extention in extentions:
 				if extention == file[-len(extention)::]:
 					with open(f'{add_dir}/{file}', 'rb') as f:
