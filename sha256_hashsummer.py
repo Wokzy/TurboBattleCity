@@ -18,6 +18,8 @@ def sum_files_with_extention(extentions=['.py', '.png'], dirs=[], solt=0):
 		if dirs == []:
 			dirs = ['scripts'] + ['sprites/' + obj for obj in os.listdir('sprites') if '.' not in obj]
 		dirs.insert(0, './')
+		if '__pycache__' in dirs:
+			dirs.remove('__pycache__')
 
 	for add_dir in dirs:
 		for file in os.listdir(add_dir):
