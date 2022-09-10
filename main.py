@@ -1,4 +1,4 @@
-import pygame, images, GameFunctions, sys, os, socket, time, json, utils
+import pygame, images, GameFunctions, sys, os, socket, time, json, utils, platform
 from constants import *
 from scripts import objects, maps
 from datetime import datetime
@@ -45,9 +45,14 @@ class Main:
 		self.server_update_timer = datetime.now()
 
 	def init_fonts(self):
-		self.info_font = pygame.font.Font(GAME_FONT, INFO_FONT_SIZE)
-		self.nickname_font = pygame.font.Font(GAME_FONT, NICK_FONT_SIZE)
-		self.score_font = pygame.font.Font(GAME_FONT, SCORE_FONT_SIZE)
+		if platform.system() == 'Linux':
+			self.info_font = pygame.font.SysFont(SYS_FONT, INFO_FONT_SIZE)
+			self.nickname_font = pygame.font.SysFont(SYS_FONT, NICK_FONT_SIZE)
+			self.score_font = pygame.font.SysFont(SYS_FONT, SCORE_FONT_SIZE)
+		else:
+			self.info_font = pygame.font.Font(GAME_FONT, INFO_FONT_SIZE)
+			self.nickname_font = pygame.font.Font(GAME_FONT, NICK_FONT_SIZE)
+			self.score_font = pygame.font.Font(GAME_FONT, SCORE_FONT_SIZE)
 		self.score_font_colors = [(180, 25, 25), (25, 180, 25), (25, 25, 180),]
 
 	def start_battle(self, gf, connection_info):
@@ -58,6 +63,7 @@ class Main:
 
 		self.player_idx = connection_info['player_idx']
 		gf.player = objects.Tank(True, self.positions[self.player_idx], self.rotations[self.player_idx])
+		print(gf.nickname_string)
 		gf.nickname = self.nickname_font.render(gf.nickname_string, False, (255, 255, 255))
 
 		#self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status}
