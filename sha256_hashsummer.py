@@ -21,6 +21,8 @@ def sum_files_with_extention(extentions=['.py', '.png'], dirs=[], solt=0):
 		if '__pycache__' in dirs:
 			dirs.remove('__pycache__')
 
+	dirs.sort()
+
 	for add_dir in dirs:
 		for file in os.listdir(add_dir):
 			for extention in extentions:
