@@ -47,7 +47,7 @@ class Grass:
 
 
 class Tank:
-	def __init__(self, player, position, rotation='forward'):
+	def __init__(self, player, position, rotation='forward', shoot_speed=TANK_SHOOT_SPEED):
 		if player == True:
 			self.images = images.get_green_tank()
 		else:
@@ -61,8 +61,9 @@ class Tank:
 		self.rect.x = position[0]
 		self.rect.y = position[1]
 
-		self.shoot_speed = FPS
-		self.shoot_iteration = self.shoot_speed
+		self.shoot_speed = shoot_speed
+		self.shoot_iteration = shoot_speed
+		self.shouted = False
 
 		self.speed = TANK_SPEED
 
@@ -117,6 +118,8 @@ class Tank:
 		self.rect.x = x
 		self.rect.y = y
 		self.score = score
+
+		self.shoot_iteration += 1
 
 
 

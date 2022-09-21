@@ -2,6 +2,7 @@ import pygame, images, GameFunctions, sys, os, socket, time, json, utils, platfo
 from constants import *
 from scripts import objects, maps
 from datetime import datetime
+from crash_logging import crash_log
 
 pygame.init()
 pygame.font.init()
@@ -97,7 +98,7 @@ class Main:
 
 		if gf.game_status == 1:
 			gf.update_battle()
-			self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.shouted),
+			self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
 								"nickname":gf.nickname_string, "score":gf.score}
 
 			rm_lst = []
@@ -126,7 +127,7 @@ class Main:
 
 			if (datetime.now() - self.server_update_timer).total_seconds() >= self.server_update_time:
 				self.send_information()
-				gf.shouted = False
+				gf.player.shouted = False
 				#print('info sent')
 				players_info = self.get_information()
 				#print('info got')
@@ -280,10 +281,9 @@ class Main:
 			elif pressed_keys[pygame.K_LEFT]:
 				gf.player.move(gf.map_objects, 'left')
 			
-			if pressed_keys[pygame.K_SPACE] and gf.shoot_iteration >= gf.shoot_speed:
-				gf.shoot_iteration = 0
+			if pressed_keys[pygame.K_SPACE]:
 				gf.shoot(gf.player)
-				gf.shouted = True
+				gf.player.shouted = True
 
 
 	def get_information(self=None, parse=True):
@@ -316,5 +316,8 @@ class Main:
 
 if __name__ == '__main__':
 	print(GAME_NAME, GAME_VERSION)
-	gf = GameFunctions.GameFunctions()
-	Main(gf).main(gf)
+	try:
+		gf = GameFunctions.GameFunctions()
+		Main(gf).main(gf)
+	except:
+		crash_log()

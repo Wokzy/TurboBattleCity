@@ -8,15 +8,10 @@ class GameFunctions:
 	def __init__(self, level=1):
 		self.init_game_objects()
 
-		self.shoot_speed = FPS
-		self.shoot_iteration = self.shoot_speed
-
 		self.nickname_string = NICKNAME
 		self.nickname = NICKNAME
 		self.player = None
 		self.player_status = 'default'
-		self.shouted = False
-
 		self.score = 0
 
 		self.level = level
@@ -113,8 +108,6 @@ class GameFunctions:
 		self.init_game_objects()
 		self.game_status = 1
 		self.score = 0
-		#self.max_enemyes = self.level + 5
-		#self.enemyes = []
 
 		return self.render_map(self.level)
 
@@ -123,20 +116,13 @@ class GameFunctions:
 		self.init_optimization()
 
 	def update_battle(self):
-		self.shoot_iteration += 1
-
-
-		'''
-		if len(self.enemyes) < self.max_enemyes:
-			if self.adding_enemyes_iteration >= self.adding_enemyes_speed:
-				self.add_enemy()
-				self.adding_enemyes_iteration = -1
-
-		self.adding_enemyes_iteration += 1
-		'''
+		self.player.shoot_iteration += 1
 
 
 	def shoot(self, tank):
+		if tank.shoot_iteration < tank.shoot_speed:
+			return
+
 		if tank.rotation == 'forward':
 			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y - 8*AVERAGE_MULTIPLYER), shooter=tank))
 		elif tank.rotation == 'back':
@@ -145,6 +131,8 @@ class GameFunctions:
 			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x + 15*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER), shooter=tank))
 		elif tank.rotation == 'left':
 			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x - 8*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER), shooter=tank))
+
+		tank.shoot_iteration = 0
 
 	def change_nickname(self, new_nick):
 		self.nickname_string = new_nick[:12:]
