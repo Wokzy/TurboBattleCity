@@ -74,6 +74,8 @@ while inputs:
 					session['players_data'] = {}
 					session['creation_time'] = datetime.now()
 					sessions[session['session_id']] = session
+					session['spawns'] = [True] * session['max_players']
+					session['scores'] = {}
 				else:
 					players_data[s] = data
 					if s not in outputs:
@@ -105,20 +107,28 @@ while inputs:
 			players_data[s] = json.loads(players_data[s])
 			session_id = players_data[s]['session_id']
 			if len(sessions[session_id]['players_data']) < sessions[session_id]['max_players']:
-				info = {'player_idx':len(sessions[session_id]['players_data']), 'level':sessions[session_id]['level'], 'session_id':session_id}
+				spawn_index = sessions[session_id]['spawns'].index(True)
+				sessions[session_id]['spawns'][spawn_index] = s
+				sessions[session_id]['scores'][spawn_index] = 0
+				info = {'spawn_index':spawn_index, 'level':sessions[session_id]['level'], 'session_id':session_id}
 				s.send(utils.prepare_object_to_sending(info))
 			else:
 				s.send(utils.prepare_object_to_sending('overflowed'))
 		elif 'player_data' in players_data[s]:
 			#print(players_data[s])
 			players_data[s] = json.loads(players_data[s])
+			if 'killer' in players_data[s]['player_data']:
+				sessions[players_data[s]['session_id']]['scores'][players_data[s]['player_data']['killer']] += 1
 			sessions[players_data[s]['session_id']]['players_data'][s] = players_data[s]['player_data']
 			sessions[players_data[s]['session_id']]['players_data'][s]['address'] = f"{s.getpeername()[0]}:{s.getpeername()[1]}" # ip:port
 			sessions[players_data[s]['session_id']]['players_data'][s]['connection_time'] = datetime.now().timestamp()
+			sessions[players_data[s]['session_id']]['players_data'][s]['score'] = sessions[players_data[s]['session_id']]['scores'][players_data[s]['player_data']['spawn_index']]
 			data = []
 			for key in sessions[players_data[s]['session_id']]['players_data']:
 				if key != s:
 					data.append(sessions[players_data[s]['session_id']]['players_data'][key])
+				else:
+					data.append(sessions[players_data[s]['session_id']]['scores'][sessions[players_data[s]['session_id']]['spawns'].index(s)])
 			s.send(utils.prepare_object_to_sending(data))
 
 	for s in exceptional:
@@ -139,6 +149,9 @@ while inputs:
 
 		for player in players_rm:
 			del sessions[session]['players_data'][player]
+			spawn_index = sessions[session]['spawns'].index(player)
+			sessions[session]['spawns'][spawn_index] = True
+			sessions[session]['scores'][spawn_index] = 0
 
 		if len(sessions[session]['players_data']) == 0:
 			if (datetime.now() - sessions[session]['creation_time']).total_seconds() >= 20:

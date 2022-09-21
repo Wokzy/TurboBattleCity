@@ -42,7 +42,7 @@ class Main:
 
 		#if connection_info:
 
-		self.server_update_time = .03125 # 32 tick rate, .015625 - 64
+		self.server_update_time = 1 / TICK_RATE
 		self.server_update_timer = datetime.now()
 
 	def init_fonts(self):
@@ -59,11 +59,12 @@ class Main:
 	def start_battle(self, gf, connection_info):
 
 		gf.level = connection_info['level']
+		self.add_score_to_killer = None
 		self.positions = gf.start_battle()
 		self.session_id = connection_info['session_id']
 
-		self.player_idx = connection_info['player_idx']
-		gf.player = objects.Tank(True, self.positions[self.player_idx], self.rotations[self.player_idx])
+		self.spawn_index = connection_info['spawn_index']
+		gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index])
 		print(gf.nickname_string)
 		gf.nickname = self.nickname_font.render(gf.nickname_string, False, (255, 255, 255))
 
@@ -99,7 +100,7 @@ class Main:
 		if gf.game_status == 1:
 			gf.update_battle()
 			self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
-								"nickname":gf.nickname_string, "score":gf.score}
+								"nickname":gf.nickname_string, "spawn_index":self.spawn_index}
 
 			rm_lst = []
 			for bullet in gf.bullets:
@@ -111,30 +112,40 @@ class Main:
 							break
 
 				if bullet.rect.colliderect(gf.player.rect):
-					gf.player.alive = False
+					if gf.player.alive:
+						gf.player.alive = False
+						if bullet.shooter.spawn_index != None:
+							self.add_score_to_killer = bullet.shooter.spawn_index
+						else:
+							self.add_score_to_killer = self.spawn_index
 					rm_lst.append(bullet)
 
 				for player in gf.players:
 					if bullet.rect.colliderect(gf.players[player].rect):
 						gf.players[player].alive = False
-						if bullet.shooter == gf.player:
-							gf.score += 1
 						rm_lst.append(bullet)
 						break
 
 			for bullet in rm_lst:
-				gf.bullets.remove(bullet)
+				if bullet in gf.bullets:
+					gf.bullets.remove(bullet)
 
 			if (datetime.now() - self.server_update_timer).total_seconds() >= self.server_update_time:
-				self.send_information()
+				if self.add_score_to_killer != None:
+					self.player_data['killer'] = self.add_score_to_killer
+					self.add_score_to_killer = None
+				self.send_player_data()
 				gf.player.shouted = False
 				#print('info sent')
 				players_info = self.get_information()
 				#print('info got')
 
-				self.scores = [(self.score_font.render(f'{gf.score}', False, (255, 255, 255)), (self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255))))]
+				self.scores = []
 
 				for player in players_info:
+					if type(player) == type(0):
+						gf.score = player
+						continue
 					addr = player['address']
 					x = player['x']
 					y = player['y']
@@ -142,6 +153,7 @@ class Main:
 					status = player['status']
 					shouted = player['shouted']
 					nickname = player['nickname']
+					spawn_index = player['spawn_index']
 					score = str(player['score'])
 
 					self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
@@ -150,7 +162,7 @@ class Main:
 					if addr in gf.players:
 						gf.players[addr].update(x, y, rot, score)
 					else:
-						gf.players[addr] = objects.Tank(False, (x, y), rot)
+						gf.players[addr] = objects.Tank(False, (x, y), rot, shoot_speed=TANK_SHOOT_SPEED//2, spawn_index=spawn_index)
 						gf.players[addr].nickname = self.nickname_font.render(nickname, False, (255, 255, 255))
 						gf.players[addr].show_nickname = True
 
@@ -160,6 +172,7 @@ class Main:
 						gf.players[addr].alive = False
 
 				self.server_update_timer = datetime.now()
+				self.scores.insert(0, (self.score_font.render(f'{gf.score}', False, (255, 255, 255)), (self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255)))))
 
 			if gf.player != None:
 				gf.player.show_nickname = True
@@ -175,7 +188,7 @@ class Main:
 				if gf.player.death_animation_iteration <= gf.player.death_animation_speed:
 					gf.player.image = gf.player.death_images[0]
 				elif gf.player.death_animation_iteration > gf.player.death_animation_speed * 2:
-					gf.player = objects.Tank(True, self.positions[self.player_idx], self.rotations[self.player_idx])
+					gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index])
 					gf.player_status = 'default'
 				else:
 					gf.player.image = gf.player.death_images[1]
@@ -199,17 +212,8 @@ class Main:
 					else:
 						gf.players[player].image = gf.players[player].death_images[1]
 
-				# TODO GRASS NICKNAMES
-
 			for obj in rm_lst:
 				del gf.players[obj]
-
-		#string = f"{self.player_idx} {gf.player.rect.x}-{gf.player.rect.y}:{gf.player.rotation} {len(gf.added_bullets)}"
-
-		#for bullet in gf.added_bullets:
-		#	string += f" {bullet.rect.x}-{bullet.rect.y}-{bullet.rotation}"
-
-		#self.s.sendto(string.encode(ENCODING), self.server)
 
 		if self.iterations == 3628800: # 3628800 = !10
 			self.iterations = 0
@@ -288,14 +292,16 @@ class Main:
 
 	def get_information(self=None, parse=True):
 		info = self.s.recv(1024).decode(ENCODING)
-		#print(info)
 		if parse and ('[' in info or '{' in info):
 			return json.loads(info)
 		return info
 
-	def send_information(self):
-		info = {'session_id':self.session_id, 'player_data':self.player_data}
+	def send_information(self, info):
 		self.s.send(utils.prepare_object_to_sending(info))
+
+	def send_player_data(self):
+		info = {'session_id':self.session_id, 'player_data':self.player_data}
+		self.send_information(info)
 
 	def connect(self):
 		self.s = socket.socket()
@@ -316,8 +322,8 @@ class Main:
 
 if __name__ == '__main__':
 	print(GAME_NAME, GAME_VERSION)
-	try:
-		gf = GameFunctions.GameFunctions()
-		Main(gf).main(gf)
-	except:
-		crash_log()
+	#try:
+	gf = GameFunctions.GameFunctions()
+	Main(gf).main(gf)
+	#except:
+		#crash_log()
