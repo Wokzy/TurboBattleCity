@@ -50,11 +50,13 @@ class Main:
 			self.info_font = pygame.font.SysFont(SYS_FONT, INFO_FONT_SIZE)
 			self.nickname_font = pygame.font.SysFont(SYS_FONT, NICK_FONT_SIZE)
 			self.score_font = pygame.font.SysFont(SYS_FONT, SCORE_FONT_SIZE)
+			self.ammunition_font = pygame.font.SysFont(SYS_FONT, AMMUNITION_FONT_SIZE)
 		else:
 			self.info_font = pygame.font.Font(GAME_FONT, INFO_FONT_SIZE)
 			self.nickname_font = pygame.font.Font(GAME_FONT, NICK_FONT_SIZE)
 			self.score_font = pygame.font.Font(GAME_FONT, SCORE_FONT_SIZE)
-		self.score_font_colors = [(180, 25, 25), (25, 180, 25), (25, 25, 180),]
+			self.ammunition_font = pygame.font.Font(GAME_FONT, AMMUNITION_FONT_SIZE)
+		self.score_font_colors = [(180, 25, 25), (25, 180, 25), (25, 25, 180),]*3
 
 	def start_battle(self, gf, connection_info):
 
@@ -218,13 +220,16 @@ class Main:
 		if self.iterations == 3628800: # 3628800 = !10
 			self.iterations = 0
 
+
 	def blit_grass(self):
 		for obj in gf.grass:
 			self.screen.blit(obj.image, obj.rect)
 
+
 	def blit_map(self, preview=[]):
 		for obj in gf.map_objects + preview:
 			self.screen.blit(obj.image, obj.rect)
+
 
 	def blit_scores(self):
 		for i in range(len(self.scores)):
@@ -234,6 +239,29 @@ class Main:
 			self.screen.blit(self.scores[i][0], score_coords)
 			self.screen.blit(self.scores[i][1], nick_coords)
 
+
+	def blit_other_players(self, gf):
+		for player in gf.players:
+			self.screen.blit(gf.players[player].image, gf.players[player].rect)
+			if gf.players[player].show_nickname:
+				self.screen.blit(gf.players[player].nickname, (gf.players[player].rect.x, gf.players[player].rect.y - 8*AVERAGE_MULTIPLYER))
+
+
+	def blit_player(self, gf):
+		if gf.player != None:
+			self.screen.blit(gf.player.image, gf.player.rect)
+			if gf.player.show_nickname:
+				self.screen.blit(gf.nickname, (gf.player.rect.x, gf.player.rect.y - 8*AVERAGE_MULTIPLYER))
+		ammunation = self.ammunition_font.render(gf.ammunition_string, False, (255, 75, 75))
+		ammunation_position = (0, HEIGHT - AMMUNITION_FONT_SIZE)
+		self.screen.blit(ammunation, ammunation_position)
+
+
+	def blit_bullets(self, gf):
+		for bullet in gf.bullets:
+			self.screen.blit(bullet.image, bullet.rect)
+
+
 	def blit_objects(self, gf):
 		for obj in gf.additional_objects:
 			self.screen.blit(obj.image, obj.rect)
@@ -241,23 +269,18 @@ class Main:
 		if gf.game_status == 1:
 			self.blit_map()
 
-			try:
-				self.screen.blit(gf.player.image, gf.player.rect)
-				if gf.player.show_nickname:
-					self.screen.blit(gf.nickname, (gf.player.rect.x, gf.player.rect.y - 8*AVERAGE_MULTIPLYER))
-			except: pass
-			for player in gf.players:
-				self.screen.blit(gf.players[player].image, gf.players[player].rect)
-				if gf.players[player].show_nickname:
-					self.screen.blit(gf.players[player].nickname, (gf.players[player].rect.x, gf.players[player].rect.y - 8*AVERAGE_MULTIPLYER))
 
-			for bullet in gf.bullets:
-				self.screen.blit(bullet.image, bullet.rect)
+			self.blit_player(gf)
+
+			self.blit_other_players(gf)
+
+			self.blit_bullets(gf)
 
 			self.blit_scores()
 			self.blit_grass()
 
 			#self.blit_text()
+
 
 	def event_update(self):
 		pressed_keys = pygame.key.get_pressed()
@@ -284,10 +307,12 @@ class Main:
 				gf.player.move(gf.map_objects, 'right')
 			elif pressed_keys[pygame.K_LEFT]:
 				gf.player.move(gf.map_objects, 'left')
-			
+
 			if pressed_keys[pygame.K_SPACE]:
-				gf.shoot(gf.player)
-				gf.player.shouted = True
+				if gf.player_ready_to_shoot():
+					gf.shoot(gf.player)
+			if pressed_keys[pygame.K_r]:
+				gf.go_on_reload()
 
 
 	def get_information(self=None, parse=True):

@@ -1,7 +1,7 @@
 import images, hashlib, random, utils
 from constants import *
 from scripts import objects, maps
-#from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 
 
 class GameFunctions:
@@ -31,6 +31,8 @@ class GameFunctions:
 		self.bullets = []
 		self.added_bullets = []
 		self.grass = []
+		self.ammunition = AMMUNITION_SIZE
+		self.ammunition_string = str(self.ammunition)
 
 
 	def main_menu_update(self, socket = None, get_information = None):
@@ -118,10 +120,23 @@ class GameFunctions:
 	def update_battle(self):
 		self.player.shoot_iteration += 1
 
+		if type(self.ammunition) != type(1):
+			time_diff = (datetime.now() - self.ammunition).total_seconds()
+			if time_diff >= AMMUNITION_RELOAD_SPEED:
+				self.ammunition = AMMUNITION_SIZE
+				self.ammunition_string = str(AMMUNITION_SIZE)
+			else:
+				self.ammunition_string = '{:.1f}'.format(AMMUNITION_RELOAD_SPEED - time_diff)
+		else:
+			self.ammunition_string = str(self.ammunition)
+
 
 	def shoot(self, tank):
 		if tank.shoot_iteration < tank.shoot_speed:
 			return
+
+		if tank == self.player:
+			self.ammunition -= 1
 
 		if tank.rotation == 'forward':
 			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y - 8*AVERAGE_MULTIPLYER), shooter=tank))
@@ -132,7 +147,20 @@ class GameFunctions:
 		elif tank.rotation == 'left':
 			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x - 8*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER), shooter=tank))
 
+		tank.shouted = True
 		tank.shoot_iteration = 0
+
+	def go_on_reload(self):
+		if type(self.ammunition) == type(1):
+			if self.ammunition != AMMUNITION_SIZE:
+				self.ammunition = datetime.now()
+
+	def player_ready_to_shoot(self):
+		if type(self.ammunition) == type(1):
+			if self.ammunition > 0:
+				return True
+			self.go_on_reload()
+		return False
 
 	def change_nickname(self, new_nick):
 		self.nickname_string = new_nick[:12:]
