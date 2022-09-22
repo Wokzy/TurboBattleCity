@@ -16,6 +16,8 @@ class Button:
 	def action(self, gf, main):
 		if self.name == 'start_battle':
 			main.start_battle(gf)
+		if self.name == 'leave_session':
+			main.leave_session(gf)
 
 
 class Wall:

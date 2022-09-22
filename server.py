@@ -95,7 +95,10 @@ while inputs:
 		if players_data[s] == 'get_sessions_info':
 			for session in sessions:
 				if s in sessions[session]['players_data']:
-					del sessions[session]['players_data']
+					del sessions[session]['players_data'][s]
+					spawn_index = sessions[session]['spawns'].index(s)
+					sessions[session]['spawns'][spawn_index] = True
+					sessions[session]['scores'][spawn_index] = 0
 					break
 
 			session_info = [{"session_id":session, "players_online":len(sessions[session]["players_data"]), 

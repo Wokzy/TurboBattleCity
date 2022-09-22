@@ -248,10 +248,12 @@ class Main:
 
 
 	def blit_player(self, gf):
-		if gf.player != None:
+		try:
 			self.screen.blit(gf.player.image, gf.player.rect)
 			if gf.player.show_nickname:
 				self.screen.blit(gf.nickname, (gf.player.rect.x, gf.player.rect.y - 8*AVERAGE_MULTIPLYER))
+		except:
+			pass
 		ammunation = self.ammunition_font.render(gf.ammunition_string, False, (255, 75, 75))
 		ammunation_position = (0, HEIGHT - AMMUNITION_FONT_SIZE)
 		self.screen.blit(ammunation, ammunation_position)
@@ -263,9 +265,6 @@ class Main:
 
 
 	def blit_objects(self, gf):
-		for obj in gf.additional_objects:
-			self.screen.blit(obj.image, obj.rect)
-
 		if gf.game_status == 1:
 			self.blit_map()
 
@@ -280,6 +279,9 @@ class Main:
 			self.blit_grass()
 
 			#self.blit_text()
+
+		for obj in gf.additional_objects:
+			self.screen.blit(obj.image, obj.rect)
 
 
 	def event_update(self):
@@ -336,6 +338,10 @@ class Main:
 		if self.s.fileno() != -1:
 			self.s.shutdown(socket.SHUT_RDWR)
 			self.s.close()
+
+	def leave_session(self, gf):
+		gf.stop_battle()
+
 
 	def quit(self):
 		self.disconnect()

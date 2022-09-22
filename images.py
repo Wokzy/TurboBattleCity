@@ -39,12 +39,17 @@ def get_blew_tank():
 	global BLEW_TANK
 	return BLEW_TANK
 
+def get_leave_session_button():
+	global LEAVE_SESSION_BUTTON
+	return LEAVE_SESSION_BUTTON
+
 
 def init():
-	global TANK, START_BUTTON, RIVER, WALL, GRASS, GREEN_TANK, RED_TANK, BULLET, BLEW_TANK
+	global TANK, START_BUTTON, RIVER, WALL, GRASS, GREEN_TANK, RED_TANK, BULLET, BLEW_TANK, LEAVE_SESSION_BUTTON
 
 	TANK = None
 	START_BUTTON = pygame.transform.scale(pygame.image.load('sprites/buttons/start_button.png'), START_BUTTON_SIZE)
+	LEAVE_SESSION_BUTTON = pygame.transform.scale(pygame.image.load('sprites/buttons/leave_session_button.png'), LEAVE_SESSION_BUTTON_SIZE)
 	WALL = pygame.transform.scale(pygame.image.load('sprites/blocks/wall.png'), BLOCK_SIZE)
 	RIVER = pygame.transform.scale(pygame.image.load('sprites/blocks/river.png'), BLOCK_SIZE)
 	GRASS = {"filled":pygame.transform.scale(pygame.image.load('sprites/blocks/grass.png'), BLOCK_SIZE), "transparent":pygame.transform.scale(pygame.image.load('sprites/blocks/transparent_grass.png'), BLOCK_SIZE)}

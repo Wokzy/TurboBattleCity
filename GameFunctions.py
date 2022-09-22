@@ -25,7 +25,7 @@ class GameFunctions:
 		self.adding_enemyes_iteration = 0
 
 	def init_game_objects(self):
-		self.additional_objects = []
+		self.additional_objects = [objects.Button('leave_session', images.get_leave_session_button(), (WIDTH - LEAVE_SESSION_BUTTON_SIZE[0], 0), LEAVE_SESSION_BUTTON_SIZE)]
 		self.map_objects = []
 		self.players = {}
 		self.bullets = []
@@ -115,6 +115,7 @@ class GameFunctions:
 
 	def stop_battle(self):
 		self.game_status = 0
+		self.additional_objects = []
 		self.init_optimization()
 
 	def update_battle(self):
