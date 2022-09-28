@@ -53,5 +53,22 @@ LEVEL_2 =\
 		 '  r  rrggrw s w ',\
 		 ' s     s  ggggg ',]
 
+LEVEL_3 =\
+		['gg         ws   ',\
+		 'gsw  rrrw      r',\
+		 '   g        w rg',\
+		 ' w    w r     gg',\
+		 '   r gggg g g gw',\
+		 'w wg  sw r  g gg',\
+		 '    rrww rrrg  g',\
+		 's w gggggggg wg ',\
+		 '  g rgrw rrr   w',\
+		 '     g r r   w s',\
+		 ' w   g r r    gw',\
+		 'gggggg  ggg   g ',\
+		 'w r    g  rgggw ',\
+		 '    r  g    w sg',\
+		 's wgggggggg   gg']
 
-LEVELS = [LEVEL_1, LEVEL_2]
+
+LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3]

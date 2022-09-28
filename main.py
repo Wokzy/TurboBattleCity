@@ -233,7 +233,7 @@ class Main:
 
 	def blit_scores(self):
 		for i in range(len(self.scores)):
-			score_coords = (WIDTH // 2 - ((SCORE_FONT_SIZE)*(len(self.scores) - 1) // 2) - SCORE_FONT_SIZE*.5 + (SCORE_FONT_SIZE + SCORE_FONT_SIZE*0.25)*i, AVERAGE_MULTIPLYER)
+			score_coords = (WIDTH // 2 - ((SCORE_FONT_SIZE)*(len(self.scores)*1.25 - 1) // 2) - SCORE_FONT_SIZE*.5 + (SCORE_FONT_SIZE + SCORE_FONT_SIZE*0.85)*i, AVERAGE_MULTIPLYER)
 			nick_coords = (score_coords[0], score_coords[1] + SCORE_FONT_SIZE + AVERAGE_MULTIPLYER)
 
 			self.screen.blit(self.scores[i][0], score_coords)
@@ -273,11 +273,11 @@ class Main:
 
 			self.blit_other_players(gf)
 
-			self.blit_bullets(gf)
 
-			self.blit_scores()
+			self.blit_bullets(gf)
 			self.blit_grass()
 
+			self.blit_scores()
 			#self.blit_text()
 
 		for obj in gf.additional_objects:
