@@ -19,29 +19,22 @@ class Button:
 		if self.name == 'leave_session':
 			main.leave_session(gf)
 
-
-class Wall:
-	def __init__(self, position):
-		self.image = images.get_wall()
-		self.rect = self.image.get_rect()
-
-		self.rect.x = position[0]
-		self.rect.y = position[1]
-
-
-class River:
-	def __init__(self, position):
-		self.image = images.get_river()
-		self.rect = self.image.get_rect()
-
-		self.rect.x = position[0]
-		self.rect.y = position[1]
-
 class Grass:
 	def __init__(self, position):
 		self.images = images.get_grass()
 		self.image = self.images['filled']
 		self.rect = self.image.get_rect()
+
+		self.rect.x = position[0]
+		self.rect.y = position[1]
+
+class MapObject:
+	def __init__(self, image, position, destroy_bullets=False, block=True):
+		self.image = image
+		self.rect = self.image.get_rect()
+
+		self.destroy_bullets = destroy_bullets
+		self.block = block
 
 		self.rect.x = position[0]
 		self.rect.y = position[1]
@@ -83,7 +76,7 @@ class Tank:
 				self.rect.y -= self.speed
 			else: return
 			for obj in map_objects:
-				if obj.__class__.__name__ == 'Wall' or obj.__class__.__name__ == 'River':
+				if obj.block:
 					if obj.rect.colliderect(self.rect):
 						self.rect.y += self.speed
 						return
@@ -92,7 +85,7 @@ class Tank:
 				self.rect.y += self.speed
 			else: return
 			for obj in map_objects:
-				if obj.__class__.__name__ == 'Wall' or obj.__class__.__name__ == 'River':
+				if obj.block:
 					if obj.rect.colliderect(self.rect):
 						self.rect.y -= self.speed
 						return
@@ -101,7 +94,7 @@ class Tank:
 				self.rect.x += self.speed
 			else: return
 			for obj in map_objects:
-				if obj.__class__.__name__ == 'Wall' or obj.__class__.__name__ == 'River':
+				if obj.block:
 					if obj.rect.colliderect(self.rect):
 						self.rect.x -= self.speed
 						return
@@ -110,7 +103,7 @@ class Tank:
 				self.rect.x -= self.speed
 			else: return
 			for obj in map_objects:
-				if obj.__class__.__name__ == 'Wall' or obj.__class__.__name__ == 'River':
+				if obj.block:
 					if obj.rect.colliderect(self.rect):
 						self.rect.x += self.speed
 						return

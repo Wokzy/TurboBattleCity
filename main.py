@@ -74,9 +74,8 @@ class Main:
 
 	def main(self, gf):
 		#gf.start_battle()
+		self.screen.fill((0, 0, 0))
 		while True:
-			self.screen.fill((0, 0, 0))
-
 
 			self.update(gf)
 
@@ -94,7 +93,11 @@ class Main:
 
 		if gf.game_status == 0:
 			res = gf.main_menu_update(socket = self.s, get_information = self.get_information)
-			if res != None:
+			if res == 'draw_map':
+				self.screen.fill((0, 0, 0))
+				self.blit_map(gf)
+				self.blit_grass(gf)
+			elif res != None:
 				if res == 'leave':
 					self.quit()
 				self.start_battle(gf, res)
@@ -108,7 +111,7 @@ class Main:
 			for bullet in gf.bullets:
 				bullet.update()
 				for obj in gf.map_objects:
-					if obj.__class__.__name__ == 'Wall':
+					if obj.destroy_bullets:
 						if bullet.rect.colliderect(obj.rect) or bullet.rect.x < 0 or bullet.rect.y < 0 or bullet.rect.y > HEIGHT or bullet.rect.x > WIDTH:
 							rm_lst.append(bullet)
 							break
@@ -221,13 +224,13 @@ class Main:
 			self.iterations = 0
 
 
-	def blit_grass(self):
+	def blit_grass(self, gf):
 		for obj in gf.grass:
 			self.screen.blit(obj.image, obj.rect)
 
 
-	def blit_map(self, preview=[]):
-		for obj in gf.map_objects + preview:
+	def blit_map(self, gf, preview=[]):
+		for obj in gf.map_objects:
 			self.screen.blit(obj.image, obj.rect)
 
 
@@ -266,7 +269,8 @@ class Main:
 
 	def blit_objects(self, gf):
 		if gf.game_status == 1:
-			self.blit_map()
+			self.screen.fill((0, 0, 0))
+			self.blit_map(gf)
 
 
 			self.blit_player(gf)
@@ -275,7 +279,7 @@ class Main:
 
 
 			self.blit_bullets(gf)
-			self.blit_grass()
+			self.blit_grass(gf)
 
 			self.blit_scores()
 			#self.blit_text()

@@ -2,56 +2,70 @@ import pygame
 from constants import *
 
 
-
 def get_tank():
 	global TANK
 	return TANK
+
 
 def get_start_button():
 	global START_BUTTON
 	return START_BUTTON
 
+
 def get_wall():
 	global WALL
 	return WALL
+
 
 def get_river():
 	global RIVER
 	return RIVER
 
+
 def get_grass():
 	global GRASS
 	return GRASS
+
 
 def get_green_tank():
 	global GREEN_TANK
 	return GREEN_TANK
 
+
 def get_red_tank():
 	global RED_TANK
 	return RED_TANK
+
 
 def get_bullet():
 	global BULLET
 	return BULLET
 
+
 def get_blew_tank():
 	global BLEW_TANK
 	return BLEW_TANK
+
 
 def get_leave_session_button():
 	global LEAVE_SESSION_BUTTON
 	return LEAVE_SESSION_BUTTON
 
 
+def get_spawn():
+	global SPAWN
+	return SPAWN
+
+
 def init():
-	global TANK, START_BUTTON, RIVER, WALL, GRASS, GREEN_TANK, RED_TANK, BULLET, BLEW_TANK, LEAVE_SESSION_BUTTON
+	global TANK, START_BUTTON, RIVER, WALL, GRASS, GREEN_TANK, RED_TANK, BULLET, BLEW_TANK, LEAVE_SESSION_BUTTON, SPAWN
 
 	TANK = None
 	START_BUTTON = pygame.transform.scale(pygame.image.load('sprites/buttons/start_button.png'), START_BUTTON_SIZE)
 	LEAVE_SESSION_BUTTON = pygame.transform.scale(pygame.image.load('sprites/buttons/leave_session_button.png'), LEAVE_SESSION_BUTTON_SIZE)
 	WALL = pygame.transform.scale(pygame.image.load('sprites/blocks/wall.png'), BLOCK_SIZE)
 	RIVER = pygame.transform.scale(pygame.image.load('sprites/blocks/river.png'), BLOCK_SIZE)
+	SPAWN = pygame.transform.scale(pygame.image.load('sprites/blocks/spawn.png'), BLOCK_SIZE)
 	GRASS = {"filled":pygame.transform.scale(pygame.image.load('sprites/blocks/grass.png'), BLOCK_SIZE), "transparent":pygame.transform.scale(pygame.image.load('sprites/blocks/transparent_grass.png'), BLOCK_SIZE)}
 
 	GREEN_TANK = {"back":pygame.transform.scale(pygame.image.load('sprites/green_tank/tank_back.png'), TANK_SIZE),

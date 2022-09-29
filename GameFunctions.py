@@ -35,15 +35,24 @@ class GameFunctions:
 		self.ammunition_string = str(self.ammunition)
 
 
+	def input_map_level(self):
+		while True:
+			try:
+				return min(max(int(input(f'Enter level from 0 to {len(maps.LEVELS)-1} -> ')), 0), len(maps.LEVELS)-1)
+			except:
+				pass
+
+
 	def main_menu_update(self, socket = None, get_information = None):
 		if not self.main_menu_on:
 			main_menu_on = True
 			print('\nWelcome to Main menu\n')
-			self.additional_objects.append(objects.Button('start_battle', images.get_start_button(), (WIDTH//2 - START_BUTTON_SIZE[0]//2, HEIGHT//2 - START_BUTTON_SIZE[1]//2), START_BUTTON_SIZE))
+			#self.additional_objects.append(objects.Button('start_battle', images.get_start_button(), (WIDTH//2 - START_BUTTON_SIZE[0]//2, HEIGHT//2 - START_BUTTON_SIZE[1]//2), START_BUTTON_SIZE))
 			if socket:
 				while True:
 					print(f'Your nickname is: {self.nickname_string}\n')
-					options = '1 - show sessions\n' + '2 - create session\n' + '3 - connect to session\n' + '4 - change nickname\n' + '0 - leave\n'
+					options = '1 - show sessions\n' + '2 - create session\n' + '3 - connect to session\n' + '4 - change nickname\n' + \
+								'5 - map preview\n' + '0 - leave\n'
 					ch = input(options)
 
 					socket.send('get_sessions_info'.encode(ENCODING))
@@ -58,7 +67,7 @@ class GameFunctions:
 					elif ch == '2':
 						while True:
 							try:
-								session = {'level':min(max(int(input(f'Enter level from 0 to {len(maps.LEVELS)-1} -> ')), 0), len(maps.LEVELS)-1), 
+								session = {'level':self.input_map_level(), 
 											'max_players':min(max(int(input(f'Max players (2-8) -> ')), 2), MAX_PLAYERS_ON_MAP)}
 								break
 							except Exception as e:
@@ -81,6 +90,9 @@ class GameFunctions:
 								return res
 					elif ch == '4':
 						self.change_nickname(input('Enter new nickname -> '))
+					elif ch == '5':
+						self.map_preview()
+						return 'draw_map'
 					elif ch == '0':
 						return 'leave'
 
@@ -89,19 +101,28 @@ class GameFunctions:
 	def init_optimization(self):
 		self.main_menu_on = False
 
-	def render_map(self, level):
+
+	def map_preview(self):
+		self.map_objects = []
+		self.grass = []
+		self.render_map(self.input_map_level(), True)
+
+
+	def render_map(self, level, show_spawns=False):
 		spawns = []
 
 		for line in maps.LEVELS[level]:
 			for obj in range(len(line)):
 				crds = (obj*25*AVERAGE_MULTIPLYER, maps.LEVELS[level].index(line)*25*AVERAGE_MULTIPLYER)
 				if line[obj] == 'w':
-					self.map_objects.append(objects.Wall(crds))
+					self.map_objects.append(objects.MapObject(images.get_wall(), crds, destroy_bullets=True))
 				elif line[obj] == 'r':
-					self.map_objects.append(objects.River(crds))
+					self.map_objects.append(objects.MapObject(images.get_river(), crds))
 				elif line[obj] == 'g':
 					self.grass.append(objects.Grass(crds))
 				elif line[obj] == 's':
+					if show_spawns:
+						self.map_objects.append(objects.MapObject(images.get_spawn(), crds))
 					spawns.append(crds)
 
 		return spawns
