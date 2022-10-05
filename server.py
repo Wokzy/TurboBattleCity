@@ -92,13 +92,16 @@ class Server:
 	def connect_player_to_session(self, s):
 		self.players_data[s] = json.loads(self.players_data[s])
 		session_id = self.players_data[s]['session_id']
-		if len(self.sessions[session_id]['players_data']) < self.sessions[session_id]['max_players']:
-			spawn_index = random.choice([i for i in range(len(self.sessions[session_id]['spawns'])) if self.sessions[session_id]['spawns'][i] == True])
-			self.sessions[session_id]['spawns'][spawn_index] = s
-			self.sessions[session_id]['scores'][spawn_index] = 0
-			s.send(utils.prepare_object_to_sending({'spawn_index':spawn_index, 'level':self.sessions[session_id]['level'], 'session_id':session_id}))
+		if session_id in self.sessions:
+			if len(self.sessions[session_id]['players_data']) < self.sessions[session_id]['max_players']:
+				spawn_index = random.choice([i for i in range(len(self.sessions[session_id]['spawns'])) if self.sessions[session_id]['spawns'][i] == True])
+				self.sessions[session_id]['spawns'][spawn_index] = s
+				self.sessions[session_id]['scores'][spawn_index] = 0
+				s.send(utils.prepare_object_to_sending({'spawn_index':spawn_index, 'level':self.sessions[session_id]['level'], 'session_id':session_id}))
+			else:
+				s.send(utils.prepare_object_to_sending('overflowed'))
 		else:
-			s.send(utils.prepare_object_to_sending('overflowed'))
+			s.send(utils.prepare_object_to_sending('There is no such session'))
 
 
 	def process_players_data(self, s):

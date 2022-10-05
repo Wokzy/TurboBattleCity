@@ -45,7 +45,7 @@ class GameFunctions:
 
 	def main_menu_update(self, socket = None, get_information = None):
 		if not self.main_menu_on:
-			main_menu_on = True
+			#self.main_menu_on = True
 			print('\nWelcome to Main menu\n')
 			#self.additional_objects.append(objects.Button('start_battle', images.get_start_button(), (WIDTH//2 - START_BUTTON_SIZE[0]//2, HEIGHT//2 - START_BUTTON_SIZE[1]//2), START_BUTTON_SIZE))
 			if socket:
@@ -59,35 +59,11 @@ class GameFunctions:
 					sessions_info = get_information()
 
 					if ch == '1':
-						print('Avalible_sessions:')
-						idx = 0
-						for session in sessions_info:
-							print(idx, session['session_id'], 'players:', session['players_online'], '/', session['max_players'], 'Map:', session['level'])
-							idx += 1
+						self.show_avalible_sessions(sessions_info)
 					elif ch == '2':
-						while True:
-							try:
-								session = {'level':self.input_map_level(), 
-											'max_players':min(max(int(input(f'Max players (2-8) -> ')), 2), MAX_PLAYERS_ON_MAP)}
-								break
-							except Exception as e:
-								print(e)
-						session['session_id'] = hashlib.md5(str(random.randint(1, 10**29)).encode()).hexdigest()
-						socket.send(utils.prepare_object_to_sending('create_session' + str(session)))
+						self.create_session(socket)
 					elif ch == '3':
-						if len(sessions_info) == 0:
-							print('There is no sessions')
-						else:
-							session = sessions_info[max(0, min(len(sessions_info)-1, int(input('Enter session id -> '))))]
-							session['connect_to_session'] = "1"
-
-							socket.send(utils.prepare_object_to_sending(session))
-							res = get_information()
-
-							if res == 'overflowed':
-								print('Session is overflowed')
-							else:
-								return res
+						return self.connect_to_session(socket, sessions_info, get_information)
 					elif ch == '4':
 						self.change_nickname(input('Enter new nickname -> '))
 					elif ch == '5':
@@ -96,6 +72,40 @@ class GameFunctions:
 					elif ch == '0':
 						return 'leave'
 
+
+	def show_avalible_sessions(self, sessions_info):
+		print('Avalible_sessions:')
+		idx = 0
+		for session in sessions_info:
+			print(idx, session['session_id'], 'players:', session['players_online'], '/', session['max_players'], 'Map:', session['level'])
+			idx += 1
+
+	def create_session(self, socket):
+		while True:
+			try:
+				session = {'level':self.input_map_level(), 
+							'max_players':min(max(int(input(f'Max players (2-8) -> ')), 2), MAX_PLAYERS_ON_MAP)}
+				break
+			except Exception as e:
+				print(e)
+		session['session_id'] = hashlib.md5(str(random.randint(1, 10**29)).encode()).hexdigest()
+		socket.send(utils.prepare_object_to_sending('create_session' + str(session)))
+
+
+	def connect_to_session(self, socket, sessions_info, get_information):
+		if len(sessions_info) == 0:
+			print('There is no sessions')
+		else:
+			session = sessions_info[max(0, min(len(sessions_info)-1, int(input('Enter session id -> '))))]
+			session['connect_to_session'] = "1"
+
+			socket.send(utils.prepare_object_to_sending(session))
+			res = get_information()
+
+			if res == 'overflowed':
+				print('Session is overflowed')
+			else:
+				return res
 
 
 	def init_optimization(self):

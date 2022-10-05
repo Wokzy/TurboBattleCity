@@ -60,6 +60,10 @@ class Main:
 
 	def start_battle(self, gf, connection_info):
 
+		if 'level' not in connection_info:
+			print(connection_info)
+			return
+
 		gf.level = connection_info['level']
 		self.add_score_to_killer = None
 		self.positions = gf.start_battle()
