@@ -92,7 +92,9 @@ class Server:
 	def connect_player_to_session(self, s):
 		self.players_data[s] = json.loads(self.players_data[s])
 		session_id = self.players_data[s]['session_id']
-		if session_id in self.sessions:
+		if self.players_data[s]['reason'] == 'observing':
+			s.send(utils.prepare_object_to_sending({'level':self.sessions[session_id]['level'], 'session_id':session_id, 'observing':1}))
+		elif session_id in self.sessions:
 			if len(self.sessions[session_id]['players_data']) < self.sessions[session_id]['max_players']:
 				spawn_index = random.choice([i for i in range(len(self.sessions[session_id]['spawns'])) if self.sessions[session_id]['spawns'][i] == True])
 				self.sessions[session_id]['spawns'][spawn_index] = s
@@ -104,6 +106,16 @@ class Server:
 			s.send(utils.prepare_object_to_sending('There is no such session'))
 
 
+	def collect_other_players_data(self, s):
+		data = []
+		for key in self.sessions[self.players_data[s]['session_id']]['players_data']:
+			if key != s:
+				data.append(self.sessions[self.players_data[s]['session_id']]['players_data'][key])
+			else:
+				data.append(self.sessions[self.players_data[s]['session_id']]['scores'][self.sessions[self.players_data[s]['session_id']]['spawns'].index(s)])
+		return data
+
+
 	def process_players_data(self, s):
 		self.players_data[s] = json.loads(self.players_data[s])
 		if 'killer' in self.players_data[s]['player_data']:
@@ -112,13 +124,12 @@ class Server:
 		self.sessions[self.players_data[s]['session_id']]['players_data'][s]['address'] = f"{s.getpeername()[0]}:{s.getpeername()[1]}" # ip:port
 		self.sessions[self.players_data[s]['session_id']]['players_data'][s]['connection_time'] = datetime.now().timestamp()
 		self.sessions[self.players_data[s]['session_id']]['players_data'][s]['score'] = self.sessions[self.players_data[s]['session_id']]['scores'][self.players_data[s]['player_data']['spawn_index']]
-		data = []
-		for key in self.sessions[self.players_data[s]['session_id']]['players_data']:
-			if key != s:
-				data.append(self.sessions[self.players_data[s]['session_id']]['players_data'][key])
-			else:
-				data.append(self.sessions[self.players_data[s]['session_id']]['scores'][self.sessions[self.players_data[s]['session_id']]['spawns'].index(s)])
-		s.send(utils.prepare_object_to_sending(data))
+		s.send(utils.prepare_object_to_sending(self.collect_other_players_data(s)))
+
+
+	def process_observing(self, s):
+		self.players_data[s] = json.loads(self.players_data[s])
+		s.send(utils.prepare_object_to_sending(self.collect_other_players_data(s)))
 
 
 	def check_expired_players_and_sessions(self):
@@ -193,6 +204,8 @@ class Server:
 					self.connect_player_to_session(s)
 				elif 'player_data' in self.players_data[s]:
 					self.process_players_data(s)
+				elif 'observing' in self.players_data[s]:
+					self.process_observing(s)
 
 			for s in self.exceptional:
 				self.disconnect(s)

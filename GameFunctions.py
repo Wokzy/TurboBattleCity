@@ -52,7 +52,7 @@ class GameFunctions:
 				while True:
 					print(f'Your nickname is: {self.nickname_string}\n')
 					options = '1 - show sessions\n' + '2 - create session\n' + '3 - connect to session\n' + '4 - change nickname\n' + \
-								'5 - map preview\n' + '0 - leave\n'
+								'5 - map preview\n' + '6 - observe game\n' + '0 - leave\n'
 					ch = input(options)
 
 					socket.send('get_sessions_info'.encode(ENCODING))
@@ -69,6 +69,8 @@ class GameFunctions:
 					elif ch == '5':
 						self.map_preview()
 						return 'map_preview'
+					elif ch == '6':
+						return self.observe_session(socket, sessions_info, get_information)
 					elif ch == '0':
 						return 'leave'
 
@@ -92,20 +94,42 @@ class GameFunctions:
 		socket.send(utils.prepare_object_to_sending('create_session' + str(session)))
 
 
-	def connect_to_session(self, socket, sessions_info, get_information):
+	def connect_to_session(self, socket, sessions_info, get_information, reason='playing'):
 		if len(sessions_info) == 0:
 			print('There is no sessions')
 		else:
 			session = sessions_info[max(0, min(len(sessions_info)-1, int(input('Enter session id -> '))))]
+			if 'password' in session:
+				attempts = 3
+				for i in range(1, attempts+1):
+					if hashlib.md5(input('Enter session password -> ').encode()).hexdigest() == session['password']:
+						break
+					elif i == attempts:
+						return
 			session['connect_to_session'] = "1"
+			session['reason'] = reason
 
 			socket.send(utils.prepare_object_to_sending(session))
 			res = get_information()
 
 			if res == 'overflowed':
 				print('Session is overflowed')
+			elif res == 'error':
+				print('Unexpected error occured during connection')
 			else:
 				return res
+
+
+	def observe_session(self, socket, sessions_info, get_information):
+		res = self.connect_to_session(socket, sessions_info, get_information, reason='observing')
+		if res != None:
+			self.init_game_objects()
+			self.game_status = 3
+			self.render_map(res['level'])
+
+		res['observing'] = True
+		return res
+
 
 
 	def init_optimization(self):

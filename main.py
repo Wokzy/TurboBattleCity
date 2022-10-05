@@ -76,6 +76,11 @@ class Main:
 
 		#self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status}
 
+
+	def start_observing(self, gf, connection_info):
+		self.session_id = connection_info['session_id']
+
+
 	def main(self, gf):
 		#gf.start_battle()
 		self.screen.fill((0, 0, 0))
@@ -98,17 +103,11 @@ class Main:
 		if gf.game_status == 0:
 			res = gf.main_menu_update(socket = self.s, get_information = self.get_information)
 
-			if res == 'map_preview':
-				'''
-				self.screen.fill((0, 0, 0))
-				self.blit_map(gf)
-				self.blit_grass(gf)
-				'''
-				pass
-
+			if res == 'leave':
+				self.quit()
+			elif 'observing' in str(res):
+				self.start_observing(gf, res)
 			elif res != None:
-				if res == 'leave':
-					self.quit()
 				self.start_battle(gf, res)
 
 		if gf.game_status == 1:
@@ -116,35 +115,9 @@ class Main:
 			self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
 								"nickname":gf.nickname_string, "spawn_index":self.spawn_index}
 
-			rm_lst = []
-			for bullet in gf.bullets:
-				bullet.update()
-				for obj in gf.map_objects:
-					if obj.destroy_bullets:
-						if bullet.rect.colliderect(obj.rect) or bullet.rect.x < 0 or bullet.rect.y < 0 or bullet.rect.y > HEIGHT or bullet.rect.x > WIDTH:
-							rm_lst.append(bullet)
-							break
+			self.update_bullets(gf)
 
-				if bullet.rect.colliderect(gf.player.rect):
-					if gf.player.alive:
-						gf.player.alive = False
-						if bullet.shooter.spawn_index != None:
-							self.add_score_to_killer = bullet.shooter.spawn_index
-						else:
-							self.add_score_to_killer = self.spawn_index
-					rm_lst.append(bullet)
-
-				for player in gf.players:
-					if bullet.rect.colliderect(gf.players[player].rect):
-						gf.players[player].alive = False
-						rm_lst.append(bullet)
-						break
-
-			for bullet in rm_lst:
-				if bullet in gf.bullets:
-					gf.bullets.remove(bullet)
-
-			if (datetime.now() - self.server_update_timer).total_seconds() >= self.server_update_time:
+			if self.it_is_time_to_update_server():
 				if self.add_score_to_killer != None:
 					self.player_data['killer'] = self.add_score_to_killer
 					self.add_score_to_killer = None
@@ -154,38 +127,9 @@ class Main:
 				players_info = self.get_information()
 				#print('info got')
 
-				self.scores = []
+				self.struct_players_info(gf, players_info)
 
-				for player in players_info:
-					if type(player) == type(0):
-						gf.score = player
-						continue
-					addr = player['address']
-					x = player['x']
-					y = player['y']
-					rot = player['rotation']
-					status = player['status']
-					shouted = player['shouted']
-					nickname = player['nickname']
-					spawn_index = player['spawn_index']
-					score = str(player['score'])
-
-					self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
-										self.info_font.render(nickname, False, (255, 255, 255)), nickname))
-
-					if addr in gf.players:
-						gf.players[addr].update(x, y, rot, score)
-					else:
-						gf.players[addr] = objects.Tank(False, (x, y), rot, shoot_speed=TANK_SHOOT_SPEED//2, spawn_index=spawn_index)
-						gf.players[addr].nickname = self.nickname_font.render(nickname, False, (255, 255, 255))
-						gf.players[addr].show_nickname = True
-
-					if shouted:
-						gf.shoot(gf.players[addr])
-					elif status == 'dead':
-						gf.players[addr].alive = False
-
-				self.server_update_timer = datetime.now()
+				self.reset_server_update_timer()
 				self.scores.insert(0, (self.score_font.render(f'{gf.score}', False, (255, 255, 255)), self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255)),
 									gf.nickname_string))
 
@@ -198,15 +142,9 @@ class Main:
 					else:
 						obj.image = obj.images['filled']
 
-			if gf.player != None and gf.player.alive == False:
-				gf.player.death_animation_iteration += 1
-				if gf.player.death_animation_iteration <= gf.player.death_animation_speed:
-					gf.player.image = gf.player.death_images[0]
-				elif gf.player.death_animation_iteration > gf.player.death_animation_speed * 2:
+				if self.process_player_death(gf.player):
 					gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index])
 					gf.player_status = 'default'
-				else:
-					gf.player.image = gf.player.death_images[1]
 
 			rm_lst = []
 
@@ -218,24 +156,128 @@ class Main:
 							gf.players[player].show_nickname = False
 							break
 
-				if gf.players[player] != None and gf.players[player].alive == False:
-					gf.players[player].death_animation_iteration += 1
-					if gf.players[player].death_animation_iteration <= gf.players[player].death_animation_speed:
-						gf.players[player].image = gf.players[player].death_images[0]
-					elif gf.players[player].death_animation_iteration > gf.players[player].death_animation_speed * 2:
-						rm_lst.append(player)
-					else:
-						gf.players[player].image = gf.players[player].death_images[1]
+				if self.process_player_death(gf.players[player]):
+					rm_lst.append(player)
 
 			for obj in rm_lst:
 				del gf.players[obj]
 		elif gf.game_status == 2:
 			pass
+		elif gf.game_status == 3:
 
+			self.update_bullets(gf)
+
+			if self.it_is_time_to_update_server():
+				info = {'session_id':self.session_id, 'observing':1}
+				self.send_information(info)
+				players_info = self.get_information()
+				self.struct_players_info(gf, players_info)
+				self.reset_server_update_timer()
+
+			rm_lst = []
+
+			for obj in gf.grass:
+				for player in gf.players:
+					if gf.players[player] != None:
+						if obj.rect.colliderect(gf.players[player].rect):
+							obj.image = obj.images['transparent']
+							break
+						else:
+							obj.image = obj.images['filled']
+
+			for player in gf.players:
+				if self.process_player_death(gf.players[player]):
+					rm_lst.append(player)
+
+			for obj in rm_lst:
+				del gf.players[obj]
 
 
 		if self.iterations == 3628800: # 3628800 = !10
 			self.iterations = 0
+
+
+	def it_is_time_to_update_server(self):
+		return (datetime.now() - self.server_update_timer).total_seconds() >= self.server_update_time
+
+	def reset_server_update_timer(self):
+		self.server_update_timer = datetime.now()
+
+	def process_player_death(self, player):
+		if player != None and player.alive == False:
+			player.death_animation_iteration += 1
+			if player.death_animation_iteration <= player.death_animation_speed:
+				player.image = player.death_images[0]
+			elif player.death_animation_iteration > player.death_animation_speed * 2:
+				return True
+			else:
+				player.image = player.death_images[1]
+
+		return False
+
+
+	def struct_players_info(self, gf, players_info):
+		self.scores = []
+
+		for player in players_info:
+			if type(player) == type(0):
+				gf.score = player
+				continue
+			addr = player['address']
+			x = player['x']
+			y = player['y']
+			rot = player['rotation']
+			status = player['status']
+			shouted = player['shouted']
+			nickname = player['nickname']
+			spawn_index = player['spawn_index']
+			score = str(player['score'])
+
+			self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
+								self.info_font.render(nickname, False, (255, 255, 255)), nickname))
+
+			if addr in gf.players:
+				gf.players[addr].update(x, y, rot, score)
+			else:
+				gf.players[addr] = objects.Tank(False, (x, y), rot, shoot_speed=TANK_SHOOT_SPEED//2, spawn_index=spawn_index)
+				gf.players[addr].nickname = self.nickname_font.render(nickname, False, (255, 255, 255))
+				gf.players[addr].show_nickname = True
+
+			if shouted:
+				gf.shoot(gf.players[addr])
+			elif status == 'dead':
+				gf.players[addr].alive = False
+
+
+	def update_bullets(self, gf):
+		rm_lst = []
+		for bullet in gf.bullets:
+			bullet.update()
+			for obj in gf.map_objects:
+				if obj.destroy_bullets:
+					if bullet.rect.colliderect(obj.rect) or bullet.rect.x < 0 or bullet.rect.y < 0 or bullet.rect.y > HEIGHT or bullet.rect.x > WIDTH:
+						rm_lst.append(bullet)
+						break
+
+
+			if gf.game_status == 1 and bullet.rect.colliderect(gf.player.rect):
+				if gf.player.alive:
+					gf.player.alive = False
+					if bullet.shooter.spawn_index != None:
+						self.add_score_to_killer = bullet.shooter.spawn_index
+					else:
+						self.add_score_to_killer = self.spawn_index
+				rm_lst.append(bullet)
+
+			for player in gf.players:
+				if bullet.rect.colliderect(gf.players[player].rect):
+					gf.players[player].alive = False
+					rm_lst.append(bullet)
+					break
+
+		for bullet in rm_lst:
+			if bullet in gf.bullets:
+				gf.bullets.remove(bullet)
 
 
 	def blit_grass(self, gf):
@@ -250,8 +292,9 @@ class Main:
 
 	def blit_scores(self):
 		for i in range(len(self.scores)):
-			score_coords = (WIDTH // 2 - ((SCORE_FONT_SIZE)*(len(self.scores)*1.25 - 1) // 2) - SCORE_FONT_SIZE*.5 + (SCORE_FONT_SIZE + SCORE_FONT_SIZE*0.85)*i, AVERAGE_MULTIPLYER)
-			nick_coords = (score_coords[0]-(NICK_FONT_SIZE*len(self.scores[i][2]))//4, score_coords[1] + SCORE_FONT_SIZE + AVERAGE_MULTIPLYER)
+			score_lenth_unit = (SCORE_FONT_SIZE)*(len(self.scores)*1.25 - 1)
+			score_coords = (WIDTH // 2 - (score_lenth_unit // 2) - SCORE_FONT_SIZE*.5 + (SCORE_FONT_SIZE + SCORE_FONT_SIZE*0.85)*i, AVERAGE_MULTIPLYER)
+			nick_coords = (score_coords[0]+(SCORE_FONT_SIZE - (NICK_FONT_SIZE*len(self.scores[i][2])))//4, score_coords[1] + SCORE_FONT_SIZE + AVERAGE_MULTIPLYER)
 			# 
 			self.screen.blit(self.scores[i][0], score_coords)
 			self.screen.blit(self.scores[i][1], nick_coords)
@@ -286,8 +329,9 @@ class Main:
 		if gf.game_status != 0:
 			self.blit_map(gf)
 
-			if gf.game_status == 1:
-				self.blit_player(gf)
+			if gf.game_status in [1, 3]:
+				if gf.game_status == 1:
+					self.blit_player(gf)
 				self.blit_other_players(gf)
 				self.blit_bullets(gf)
 				self.blit_scores()
@@ -356,7 +400,7 @@ class Main:
 
 	def exit_map(self, gf):
 		print('123')
-		if gf.game_status == 1 or gf.game_status == 2:
+		if gf.game_status in [1, 2, 3]:
 			print('hello')
 			gf.stop_battle()
 
