@@ -92,7 +92,7 @@ class GameFunctions:
 						self.change_nickname(input('Enter new nickname -> '))
 					elif ch == '5':
 						self.map_preview()
-						return 'draw_map'
+						return 'map_preview'
 					elif ch == '0':
 						return 'leave'
 
@@ -103,8 +103,10 @@ class GameFunctions:
 
 
 	def map_preview(self):
+		self.game_status = 2
 		self.map_objects = []
 		self.grass = []
+		self.init_game_objects()
 		self.render_map(self.input_map_level(), True)
 
 

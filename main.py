@@ -93,10 +93,15 @@ class Main:
 
 		if gf.game_status == 0:
 			res = gf.main_menu_update(socket = self.s, get_information = self.get_information)
-			if res == 'draw_map':
+
+			if res == 'map_preview':
+				'''
 				self.screen.fill((0, 0, 0))
 				self.blit_map(gf)
 				self.blit_grass(gf)
+				'''
+				pass
+
 			elif res != None:
 				if res == 'leave':
 					self.quit()
@@ -162,7 +167,7 @@ class Main:
 					score = str(player['score'])
 
 					self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
-										(self.info_font.render(nickname, False, (255, 255, 255)))))
+										self.info_font.render(nickname, False, (255, 255, 255)), nickname))
 
 					if addr in gf.players:
 						gf.players[addr].update(x, y, rot, score)
@@ -177,7 +182,8 @@ class Main:
 						gf.players[addr].alive = False
 
 				self.server_update_timer = datetime.now()
-				self.scores.insert(0, (self.score_font.render(f'{gf.score}', False, (255, 255, 255)), (self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255)))))
+				self.scores.insert(0, (self.score_font.render(f'{gf.score}', False, (255, 255, 255)), self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255)),
+									gf.nickname_string))
 
 			if gf.player != None:
 				gf.player.show_nickname = True
@@ -219,6 +225,10 @@ class Main:
 
 			for obj in rm_lst:
 				del gf.players[obj]
+		elif gf.game_status == 2:
+			pass
+
+
 
 		if self.iterations == 3628800: # 3628800 = !10
 			self.iterations = 0
@@ -237,8 +247,8 @@ class Main:
 	def blit_scores(self):
 		for i in range(len(self.scores)):
 			score_coords = (WIDTH // 2 - ((SCORE_FONT_SIZE)*(len(self.scores)*1.25 - 1) // 2) - SCORE_FONT_SIZE*.5 + (SCORE_FONT_SIZE + SCORE_FONT_SIZE*0.85)*i, AVERAGE_MULTIPLYER)
-			nick_coords = (score_coords[0], score_coords[1] + SCORE_FONT_SIZE + AVERAGE_MULTIPLYER)
-
+			nick_coords = (score_coords[0]-(NICK_FONT_SIZE*len(self.scores[i][2]))//4, score_coords[1] + SCORE_FONT_SIZE + AVERAGE_MULTIPLYER)
+			# 
 			self.screen.blit(self.scores[i][0], score_coords)
 			self.screen.blit(self.scores[i][1], nick_coords)
 
@@ -268,20 +278,17 @@ class Main:
 
 
 	def blit_objects(self, gf):
-		if gf.game_status == 1:
-			self.screen.fill((0, 0, 0))
+		self.screen.fill((0, 0, 0))
+		if gf.game_status != 0:
 			self.blit_map(gf)
 
+			if gf.game_status == 1:
+				self.blit_player(gf)
+				self.blit_other_players(gf)
+				self.blit_bullets(gf)
+				self.blit_scores()
 
-			self.blit_player(gf)
-
-			self.blit_other_players(gf)
-
-
-			self.blit_bullets(gf)
 			self.blit_grass(gf)
-
-			self.blit_scores()
 			#self.blit_text()
 
 		for obj in gf.additional_objects:
@@ -343,9 +350,11 @@ class Main:
 			self.s.shutdown(socket.SHUT_RDWR)
 			self.s.close()
 
-	def leave_session(self, gf):
-		gf.stop_battle()
-
+	def exit_map(self, gf):
+		print('123')
+		if gf.game_status == 1 or gf.game_status == 2:
+			print('hello')
+			gf.stop_battle()
 
 	def quit(self):
 		self.disconnect()

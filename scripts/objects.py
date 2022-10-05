@@ -17,7 +17,7 @@ class Button:
 		if self.name == 'start_battle':
 			main.start_battle(gf)
 		if self.name == 'leave_session':
-			main.leave_session(gf)
+			main.exit_map(gf)
 
 class Grass:
 	def __init__(self, position):
