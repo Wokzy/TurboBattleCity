@@ -63,6 +63,7 @@ class GameFunctions:
 					elif ch == '2':
 						self.create_session(socket)
 					elif ch == '3':
+						self.show_avalible_sessions(sessions_info)
 						return self.connect_to_session(socket, sessions_info, get_information)
 					elif ch == '4':
 						self.change_nickname(input('Enter new nickname -> '))
@@ -79,7 +80,8 @@ class GameFunctions:
 		print('Avalible_sessions:')
 		idx = 0
 		for session in sessions_info:
-			print(idx, session['session_id'], 'players:', session['players_online'], '/', session['max_players'], 'Map:', session['level'])
+			print(idx, session['session_id'], 'players:', session['players_online'], '/', session['max_players'],
+			'Map:', session['level'], f'password: {("No", "Yes")["password" in session]}')
 			idx += 1
 
 	def create_session(self, socket):
@@ -87,6 +89,9 @@ class GameFunctions:
 			try:
 				session = {'level':self.input_map_level(), 
 							'max_players':min(max(int(input(f'Max players (2-8) -> ')), 2), MAX_PLAYERS_ON_MAP)}
+				password = input('Enter password (leave empty for no password) -> ')
+				if password:
+					session['password'] = hashlib.md5(password.encode()).hexdigest()
 				break
 			except Exception as e:
 				print(e)
@@ -102,7 +107,7 @@ class GameFunctions:
 			if 'password' in session:
 				attempts = 3
 				for i in range(1, attempts+1):
-					if hashlib.md5(input('Enter session password -> ').encode()).hexdigest() == session['password']:
+					if hashlib.md5(input(f'Enter session password ({attempts - i} attempts left) -> ').encode()).hexdigest() == session['password']:
 						break
 					elif i == attempts:
 						return

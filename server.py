@@ -48,8 +48,16 @@ class Server:
 
 
 	def get_sessions_info(self):
-		return [{"session_id":session, "players_online":len(self.sessions[session]["players_data"]), 
-					"max_players":self.sessions[session]['max_players'], 'level':self.sessions[session]['level']} for session in self.sessions]
+		sessions_info = []
+		for session in self.sessions:
+				info = {"session_id":session, "players_online":len(self.sessions[session]["players_data"]), 
+					"max_players":self.sessions[session]['max_players'], 'level':self.sessions[session]['level']}
+				if 'password' in self.sessions[session]:
+					info['password'] = self.sessions[session]['password']
+
+				sessions_info.append(info)
+
+		return sessions_info
 
 
 	def create_session(self, data):
@@ -129,7 +137,10 @@ class Server:
 
 	def process_observing(self, s):
 		self.players_data[s] = json.loads(self.players_data[s])
-		s.send(utils.prepare_object_to_sending(self.collect_other_players_data(s)))
+		if self.players_data[s]['session_id'] in self.sessions:
+			s.send(utils.prepare_object_to_sending(self.collect_other_players_data(s)))
+		else:
+			s.send(utils.prepare_object_to_sending('value_error'))
 
 
 	def check_expired_players_and_sessions(self):

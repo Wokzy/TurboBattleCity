@@ -171,6 +171,10 @@ class Main:
 				info = {'session_id':self.session_id, 'observing':1}
 				self.send_information(info)
 				players_info = self.get_information()
+				if self.message_has_an_error(players_info):
+					print('Session does not exist yet or anymore')
+					self.exit_map(gf)
+					return
 				self.struct_players_info(gf, players_info)
 				self.reset_server_update_timer()
 
@@ -193,8 +197,12 @@ class Main:
 				del gf.players[obj]
 
 
-		if self.iterations == 3628800: # 3628800 = !10
+		if self.iterations >= 3628800: # 3628800 = !10
 			self.iterations = 0
+
+
+	def message_has_an_error(self, message):
+		return '_error' in message
 
 
 	def it_is_time_to_update_server(self):
@@ -399,9 +407,7 @@ class Main:
 			self.s.close()
 
 	def exit_map(self, gf):
-		print('123')
 		if gf.game_status in [1, 2, 3]:
-			print('hello')
 			gf.stop_battle()
 
 	def quit(self):
