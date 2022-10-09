@@ -1,4 +1,14 @@
-import pygame, images, GameFunctions, sys, os, socket, time, json, utils, platform
+import os
+import sys
+import time
+import json
+import utils
+import socket
+import pygame
+import images
+import platform
+import GameFunctions
+
 from constants import *
 from scripts import objects, maps
 from datetime import datetime
@@ -420,8 +430,6 @@ class Main:
 
 if __name__ == '__main__':
 	print(GAME_NAME, GAME_VERSION)
-	#try:
+
 	gf = GameFunctions.GameFunctions()
 	Main(gf).main(gf)
-	#except:
-		#crash_log()

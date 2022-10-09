@@ -9,3 +9,7 @@ __pycache__/
 *gz
 *TODO*
 config.json
+*.exe
+*.spec
+dist
+build
