@@ -38,8 +38,10 @@ class GameFunctions:
 	def input_map_level(self):
 		while True:
 			try:
-				return min(max(int(input(f'Enter level from 0 to {len(maps.LEVELS)-1} -> ')), 0), len(maps.LEVELS)-1)
-			except:
+				level_id = min(max(int(input(f'Enter level from 0 to {len(maps.LEVELS)-1} -> ')), 0), len(maps.LEVELS)-1)
+				max_players = sum([row.count('s') for row in maps.LEVELS[level_id]])
+				return level_id, max_players
+			except Exception as e:
 				pass
 
 
@@ -87,8 +89,9 @@ class GameFunctions:
 	def create_session(self, socket):
 		while True:
 			try:
-				session = {'level':self.input_map_level(), 
-							'max_players':min(max(int(input(f'Max players (2-8) -> ')), 2), MAX_PLAYERS_ON_MAP)}
+				level, max_players = self.input_map_level()
+				session = {'level': level,
+							'max_players':min(max(int(input(f'Max players (2-{max_players}) -> ')), 2), max_players)}
 				password = input('Enter password (leave empty for no password) -> ')
 				if password:
 					session['password'] = hashlib.md5(password.encode()).hexdigest()
@@ -168,6 +171,7 @@ class GameFunctions:
 
 		return spawns
 
+
 	def start_battle(self):
 		self.init_game_objects()
 		self.game_status = 1
@@ -175,10 +179,17 @@ class GameFunctions:
 
 		return self.render_map(self.level)
 
+
 	def stop_battle(self):
 		self.game_status = 0
 		self.additional_objects = []
 		self.init_optimization()
+
+
+	def load_ammunition(self):
+		self.ammunition = AMMUNITION_SIZE
+		self.ammunition_string = str(AMMUNITION_SIZE)
+
 
 	def update_battle(self):
 		self.player.shoot_iteration += 1
@@ -186,8 +197,7 @@ class GameFunctions:
 		if type(self.ammunition) != type(1):
 			time_diff = (datetime.now() - self.ammunition).total_seconds()
 			if time_diff >= AMMUNITION_RELOAD_SPEED:
-				self.ammunition = AMMUNITION_SIZE
-				self.ammunition_string = str(AMMUNITION_SIZE)
+				self.load_ammunition()
 			else:
 				self.ammunition_string = '{:.1f}'.format(AMMUNITION_RELOAD_SPEED - time_diff)
 		else:

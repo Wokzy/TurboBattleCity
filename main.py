@@ -156,6 +156,7 @@ class Main:
 				if self.process_player_death(gf.player):
 					gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index])
 					gf.player_status = 'default'
+					gf.load_ammunition()
 
 			rm_lst = []
 
@@ -374,9 +375,9 @@ class Main:
 					if obj.__class__.__name__ == 'Button' and obj.rect.collidepoint(mos_pos):
 						obj.action(gf = gf, main = self)
 						break
-			elif event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_t and gf.player != None:
-					gf.player.alive = False
+			#elif event.type == pygame.KEYDOWN:
+				#if event.key == pygame.K_t and gf.player != None:
+				#	gf.player.alive = False
 
 		if gf.game_status == 1 and gf.player != None and gf.player.alive:
 			if pressed_keys[pygame.K_UP]:
