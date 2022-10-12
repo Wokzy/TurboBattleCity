@@ -149,7 +149,7 @@ class GameFunctions:
 		self.map_objects = []
 		self.grass = []
 		self.init_game_objects()
-		self.render_map(self.input_map_level(), True)
+		self.render_map(self.input_map_level()[0], True)
 
 
 	def render_map(self, level, show_spawns=False):

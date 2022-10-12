@@ -1,7 +1,7 @@
 import json
 
 GAME_NAME = 'Turbo Batlle City'
-GAME_VERSION = 'v1.1'
+GAME_VERSION = 'v0.1.0-alpha'
 
 CONFIG_FILE = 'config.json'
 
