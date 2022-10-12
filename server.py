@@ -1,15 +1,25 @@
-import socket, select, time, json, utils, random, sha256_hashsummer
-from constants import SERVER_PORT, SERVER_IP
+import ssl
+import time
+import json
+import utils
+import random
+import socket
+import select
+import sha256_hashsummer
+
+from constants import SERVER_PORT, SERVER_IP, ENCODING
 from datetime import datetime
 
 
-ENCODING = 'utf-8'
-
 class Server:
 	def __init__(self):
-		self.sock = socket.socket()
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		self.sock = ssl.wrap_socket(self.sock, server_side=True, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
+
 		self.sock.bind((SERVER_IP, SERVER_PORT))
 		self.sock.listen(5)
+
 		self.inputs = [self.sock]
 		self.outputs = []
 

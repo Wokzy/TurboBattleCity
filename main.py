@@ -1,5 +1,6 @@
 import os
 import sys
+import ssl
 import time
 import json
 import utils
@@ -408,7 +409,9 @@ class Main:
 		self.send_information(info)
 
 	def connect(self):
-		self.s = socket.socket()
+		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		self.s = ssl.wrap_socket(self.s, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
 		self.s.connect(self.server)
 
 	def disconnect(self):
