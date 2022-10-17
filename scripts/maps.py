@@ -87,5 +87,23 @@ LEVEL_4 =\
 		 'w  ggggg     w s',\
 		 's   w     w     ']
 
+LEVEL_5 =\
+		['s w          w s',\
+		 '  g rggg r      ',\
+		 'w ggg r    r  ww',\
+		 '  ggggggggggggg ',\
+		 'g gggw     wggg ',\
+		 'wwwg   www   www',\
+		 '  gw w     w  g ',\
+		 's g  w  r  w  ws',\
+		 'g gw w     w  g ',\
+		 'g gg   www   www',\
+		 'rwgggw     wggg ',\
+		 'w ggggggggggggg ',\
+		 '   r gg   w  ggg',\
+		 'wggg rg r  g w w',\
+		 '  gw  ggw r     ',\
+		 's g  w gggg w  s']
 
-LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4]
+
+LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5]

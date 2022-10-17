@@ -354,10 +354,12 @@ class Main:
 					self.blit_player(gf)
 				self.blit_other_players(gf)
 				self.blit_bullets(gf)
-				self.blit_scores()
 
 			self.blit_grass(gf)
 			#self.blit_text()
+
+			if gf.game_status in [1, 3]:
+				self.blit_scores()
 
 		for obj in gf.additional_objects:
 			self.screen.blit(obj.image, obj.rect)
