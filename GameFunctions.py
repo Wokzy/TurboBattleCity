@@ -33,6 +33,7 @@ class GameFunctions:
 		self.grass = []
 		self.ammunition = AMMUNITION_SIZE
 		self.ammunition_string = str(self.ammunition)
+		self.immunity_timer = None
 
 
 	def input_map_level(self):
@@ -193,6 +194,9 @@ class GameFunctions:
 
 	def update_battle(self):
 		self.player.shoot_iteration += 1
+
+		if self.immunity_timer != None and (datetime.now() - self.immunity_timer).total_seconds() >= IMMUNITY_DURATION:
+			self.immunity_timer = None
 
 		if type(self.ammunition) != type(1):
 			time_diff = (datetime.now() - self.ammunition).total_seconds()

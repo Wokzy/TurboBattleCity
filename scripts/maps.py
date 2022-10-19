@@ -16,6 +16,7 @@ LEVEL_SAMPLE =\
 		 '                ',\
 		 '                ',\
 		 '                ',\
+		 '                ',\
 		 '                ']
 
 LEVEL_1 =\
@@ -105,5 +106,23 @@ LEVEL_5 =\
 		 '  gw  ggw r     ',\
 		 's g  w gggg w  s']
 
+LEVEL_6 =\
+		['s  w        w  s',\
+		 ' wgg          w ',\
+		 '    gg  w  ggg  ',\
+		 'w  wg w s w g  w',\
+		 'g    g  w  gg   ',\
+		 'g wsw gggggg   w',\
+		 'g    gw rggw    ',\
+		 ' w w g  g  g  w ',\
+		 ' s wggrgggrgw s ',\
+		 ' w  gg  g  gg w ',\
+		 '   wg w r  wgggg',\
+		 'g            g  ',\
+		 'wgwswg  w   gg w',\
+		 '     gw s w g   ',\
+		 ' w w g  w  g  w ',\
+		 's  w  ggggg w  s']
 
-LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5]
+
+LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5, LEVEL_6]

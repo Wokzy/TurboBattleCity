@@ -156,6 +156,7 @@ class Main:
 				if self.process_player_death(gf.player):
 					gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index])
 					gf.player_status = 'default'
+					gf.immunity_timer = datetime.now()
 					gf.load_ammunition()
 
 			rm_lst = []
@@ -280,7 +281,7 @@ class Main:
 						break
 
 
-			if gf.game_status == 1 and bullet.rect.colliderect(gf.player.rect):
+			if gf.game_status == 1 and bullet.rect.colliderect(gf.player.rect) and gf.immunity_timer == None:
 				if gf.player.alive:
 					gf.player.alive = False
 					if bullet.shooter.spawn_index != None:
