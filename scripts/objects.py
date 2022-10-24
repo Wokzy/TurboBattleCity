@@ -108,12 +108,13 @@ class Tank:
 						self.rect.x += self.speed
 						return
 
-	def update(self, x, y, rotation, score=0):
+	def update(self, x, y, rotation, score=0, alive=True):
 		self.image = self.images[rotation]
 		self.rotation = rotation
 		self.rect.x = x
 		self.rect.y = y
 		self.score = score
+		self.alive = alive
 
 		self.shoot_iteration += 1
 

@@ -42,9 +42,9 @@ LEVEL_2 =\
 		 ' ww        r   g',\
 		 ' w rr r  rg    g',\
 		 ' g g    ggg w   ',\
-		 ' g  ggggrrr   g ',\
-		 'w w grr g g  gg ',\
-		 's   ggggggggggg ',\
+		 'wg  ggggrrr   g ',\
+		 's w grr g g  gg ',\
+		 '    ggggggggggg ',\
 		 'w r rrrr gg     ',\
 		 ' gg w ggggg  rgw',\
 		 'gw  gggrg  rrs  ',\

@@ -34,6 +34,7 @@ class GameFunctions:
 		self.ammunition = AMMUNITION_SIZE
 		self.ammunition_string = str(self.ammunition)
 		self.immunity_timer = None
+		self.death_timer = None
 
 
 	def input_map_level(self):

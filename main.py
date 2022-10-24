@@ -122,27 +122,38 @@ class Main:
 				self.start_battle(gf, res)
 
 		if gf.game_status == 1:
-			gf.update_battle()
-			self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
-								"nickname":gf.nickname_string, "spawn_index":self.spawn_index}
+			if gf.player == None:
+				death_time = (datetime.now() - gf.death_timer).total_seconds()
+				if death_time >= DEATH_DURATION:
+					gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index])
+					gf.player_status = 'default'
+					gf.immunity_timer = datetime.now()
+					gf.load_ammunition()
+				else:
+					gf.ammunition_string = '{:.1f}'.format(DEATH_DURATION - death_time)
+			else:
+				gf.update_battle()
+				self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
+									"nickname":gf.nickname_string, "spawn_index":self.spawn_index, 'alive':int(gf.player.alive)}
 
-			self.update_bullets(gf)
 
 			if self.it_is_time_to_update_server():
 				if self.add_score_to_killer != None:
 					self.player_data['killer'] = self.add_score_to_killer
 					self.add_score_to_killer = None
 				self.send_player_data()
-				gf.player.shouted = False
-				#print('info sent')
+				if gf.player != None:
+					gf.player.shouted = False
 				players_info = self.get_information()
-				#print('info got')
 
 				self.struct_players_info(gf, players_info)
 
 				self.reset_server_update_timer()
 				self.scores.insert(0, (self.score_font.render(f'{gf.score}', False, (255, 255, 255)), self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255)),
 									gf.nickname_string))
+
+			self.update_bullets(gf)
+
 
 			if gf.player != None:
 				gf.player.show_nickname = True
@@ -154,10 +165,8 @@ class Main:
 						obj.image = obj.images['filled']
 
 				if self.process_player_death(gf.player):
-					gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index])
-					gf.player_status = 'default'
-					gf.immunity_timer = datetime.now()
-					gf.load_ammunition()
+					gf.player = None
+					gf.death_timer = datetime.now()
 
 			rm_lst = []
 
@@ -253,21 +262,22 @@ class Main:
 			nickname = player['nickname']
 			spawn_index = player['spawn_index']
 			score = str(player['score'])
+			alive = player['alive']
 
 			self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
 								self.info_font.render(nickname, False, (255, 255, 255)), nickname))
 
 			if addr in gf.players:
-				gf.players[addr].update(x, y, rot, score)
-			else:
+				gf.players[addr].update(x, y, rot, score, alive=bool(alive))
+			elif alive:
 				gf.players[addr] = objects.Tank(False, (x, y), rot, shoot_speed=TANK_SHOOT_SPEED//2, spawn_index=spawn_index)
 				gf.players[addr].nickname = self.nickname_font.render(nickname, False, (255, 255, 255))
 				gf.players[addr].show_nickname = True
 
 			if shouted:
 				gf.shoot(gf.players[addr])
-			elif status == 'dead':
-				gf.players[addr].alive = False
+			#elif status == 'dead':
+			#	gf.players[addr].alive = False
 
 
 	def update_bullets(self, gf):
@@ -292,7 +302,7 @@ class Main:
 
 			for player in gf.players:
 				if bullet.rect.colliderect(gf.players[player].rect):
-					gf.players[player].alive = False
+					#gf.players[player].alive = False
 					rm_lst.append(bullet)
 					break
 
@@ -382,7 +392,7 @@ class Main:
 				#if event.key == pygame.K_t and gf.player != None:
 				#	gf.player.alive = False
 
-		if gf.game_status == 1 and gf.player != None and gf.player.alive:
+		if gf.game_status == 1 and gf.player != None and gf.player.alive:# and self.iterations % MOVEMENT_TICKS == 0:
 			if pressed_keys[pygame.K_UP]:
 				gf.player.move(gf.map_objects, 'forward')
 			elif pressed_keys[pygame.K_DOWN]:
