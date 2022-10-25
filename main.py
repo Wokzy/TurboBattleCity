@@ -8,6 +8,7 @@ import socket
 import pygame
 import images
 import platform
+import traceback
 import GameFunctions
 
 from constants import *
@@ -291,7 +292,7 @@ class Main:
 						break
 
 
-			if gf.game_status == 1 and bullet.rect.colliderect(gf.player.rect) and gf.immunity_timer == None:
+			if gf.game_status == 1 and gf.player != None and bullet.rect.colliderect(gf.player.rect) and gf.immunity_timer == None:
 				if gf.player.alive:
 					gf.player.alive = False
 					if bullet.shooter.spawn_index != None:
@@ -449,4 +450,10 @@ if __name__ == '__main__':
 	print(GAME_NAME, GAME_VERSION)
 
 	gf = GameFunctions.GameFunctions()
-	Main(gf).main(gf)
+
+	try:
+		Main(gf).main(gf)
+	except Exception as e:
+		if e != SystemExit:
+			print(traceback.format_exc())
+			input('\n\n PRESS ENTER TO EXIT GAME CRASH: ')
