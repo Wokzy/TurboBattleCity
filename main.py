@@ -139,6 +139,8 @@ class Main:
 
 
 			if self.it_is_time_to_update_server():
+				if self.iterations % FPS*5 == 0:
+					gf.players = {}
 				if self.add_score_to_killer != None:
 					self.player_data['killer'] = self.add_score_to_killer
 					self.add_score_to_killer = None
