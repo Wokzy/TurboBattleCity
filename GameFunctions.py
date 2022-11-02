@@ -195,6 +195,7 @@ class GameFunctions:
 
 	def update_battle(self):
 		self.player.shoot_iteration += 1
+		self.player.general_update()
 
 		if self.immunity_timer != None and (datetime.now() - self.immunity_timer).total_seconds() >= IMMUNITY_DURATION:
 			self.immunity_timer = None

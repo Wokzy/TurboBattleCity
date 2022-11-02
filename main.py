@@ -135,7 +135,7 @@ class Main:
 			else:
 				gf.update_battle()
 				self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
-									"nickname":gf.nickname_string, "spawn_index":self.spawn_index, 'alive':int(gf.player.alive)}
+									"nickname":gf.nickname_string, "spawn_index":self.spawn_index, 'alive':int(gf.player.alive), 'boost':int(gf.player.boost)}
 
 
 			if self.it_is_time_to_update_server():
@@ -255,12 +255,13 @@ class Main:
 			spawn_index = player['spawn_index']
 			score = str(player['score'])
 			alive = player['alive']
+			boost = player['boost']
 
 			self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
 								self.info_font.render(nickname, False, (255, 255, 255)), nickname))
 
 			if addr in gf.players:
-				gf.players[addr].update(x, y, rot, score, alive=bool(alive))
+				gf.players[addr].update(x, y, rot, score, alive=bool(alive), boost=bool(boost))
 			elif alive:
 				gf.players[addr] = objects.Tank(False, (x, y), rot, shoot_speed=TANK_SHOOT_SPEED//2, spawn_index=spawn_index)
 				gf.players[addr].nickname = self.nickname_font.render(nickname, False, (255, 255, 255))
@@ -322,9 +323,15 @@ class Main:
 			self.screen.blit(self.scores[i][0], score_coords)
 			self.screen.blit(self.scores[i][1], nick_coords)
 
+	def blit_additional_images(self, imgs):
+		for key in imgs:
+			if type(imgs[key]) == list:
+				for img in imgs[key]:
+					self.screen.blit(img['image'], img['position'])
 
 	def blit_other_players(self, gf):
 		for player in gf.players:
+			self.blit_additional_images(gf.players[player].additional_images)
 			self.screen.blit(gf.players[player].image, gf.players[player].rect)
 			if gf.players[player].show_nickname:
 				self.screen.blit(gf.players[player].nickname, (gf.players[player].rect.x, gf.players[player].rect.y - 8*AVERAGE_MULTIPLYER))
@@ -332,11 +339,13 @@ class Main:
 
 	def blit_player(self, gf):
 		try:
-			self.screen.blit(gf.player.image, gf.player.rect)
-			if gf.player.show_nickname:
-				self.screen.blit(gf.nickname, (gf.player.rect.x, gf.player.rect.y - 8*AVERAGE_MULTIPLYER))
-		except:
-			pass
+			if gf.player != None:
+				self.blit_additional_images(gf.player.additional_images)
+				self.screen.blit(gf.player.image, gf.player.rect)
+				if gf.player.show_nickname:
+					self.screen.blit(gf.nickname, (gf.player.rect.x, gf.player.rect.y - 8*AVERAGE_MULTIPLYER))
+		except Exception as e:
+			print(e) #pass
 		ammunation = self.ammunition_font.render(gf.ammunition_string, False, (255, 75, 75))
 		ammunation_position = (0, HEIGHT - AMMUNITION_FONT_SIZE)
 		self.screen.blit(ammunation, ammunation_position)
