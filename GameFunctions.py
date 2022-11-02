@@ -249,3 +249,6 @@ class GameFunctions:
 		f = open(CONFIG_FILE, 'w')
 		json.dump(data, f)
 		f.close()
+
+#	def process_object_animation(self, obj, imgs, iteration):
+#		pass

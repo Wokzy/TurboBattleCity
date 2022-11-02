@@ -67,45 +67,48 @@ class Tank:
 		self.death_animation_speed = FPS // 2
 		self.death_animation_iteration = 0
 
+		self.boost = False
+
 	def move(self, map_objects, rotation):
 		self.image = self.images[rotation]
 		self.rotation = rotation
+		current_speed = self.speed + int(self.boost) * (TANK_SPEED_BOOST_MULTIPLYER - 1)
 
 		if rotation == 'forward':
-			if self.rect.y - self.speed >= 0:
-				self.rect.y -= self.speed
+			if self.rect.y - current_speed >= 0:
+				self.rect.y -= current_speed 
 			else: return
 			for obj in map_objects:
 				if obj.block:
 					if obj.rect.colliderect(self.rect):
-						self.rect.y += self.speed
+						self.rect.y += current_speed
 						return
 		elif rotation == 'back':
-			if self.rect.y + self.speed <= HEIGHT - TANK_SIZE[1]:
-				self.rect.y += self.speed
+			if self.rect.y + current_speed <= HEIGHT - TANK_SIZE[1]:
+				self.rect.y += current_speed
 			else: return
 			for obj in map_objects:
 				if obj.block:
 					if obj.rect.colliderect(self.rect):
-						self.rect.y -= self.speed
+						self.rect.y -= current_speed
 						return
 		elif rotation == 'right':
-			if self.rect.x + self.speed <= WIDTH - TANK_SIZE[0]:
-				self.rect.x += self.speed
+			if self.rect.x + current_speed <= WIDTH - TANK_SIZE[0]:
+				self.rect.x += current_speed
 			else: return
 			for obj in map_objects:
 				if obj.block:
 					if obj.rect.colliderect(self.rect):
-						self.rect.x -= self.speed
+						self.rect.x -= current_speed
 						return
 		elif rotation == 'left':
-			if self.rect.x - self.speed >= 0:
-				self.rect.x -= self.speed
+			if self.rect.x - current_speed >= 0:
+				self.rect.x -= current_speed
 			else: return
 			for obj in map_objects:
 				if obj.block:
 					if obj.rect.colliderect(self.rect):
-						self.rect.x += self.speed
+						self.rect.x += current_speed
 						return
 
 	def update(self, x, y, rotation, score=0, alive=True):

@@ -385,6 +385,8 @@ class Main:
 				#	gf.player.alive = False
 
 		if gf.game_status == 1 and gf.player != None and gf.player.alive:# and self.iterations % MOVEMENT_TICKS == 0:
+			gf.player.boost = pressed_keys[pygame.K_LSHIFT] or pressed_keys[pygame.K_RSHIFT]
+
 			if pressed_keys[pygame.K_UP]:
 				gf.player.move(gf.map_objects, 'forward')
 			elif pressed_keys[pygame.K_DOWN]:
