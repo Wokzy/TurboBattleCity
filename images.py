@@ -57,8 +57,13 @@ def get_spawn():
 	return SPAWN
 
 
+def get_boost_bar():
+	global BOOST_BAR
+	return BOOST_BAR
+
+
 def init():
-	global TANK, START_BUTTON, RIVER, WALL, GRASS, GREEN_TANK, RED_TANK, BULLET, BLEW_TANK, LEAVE_SESSION_BUTTON, SPAWN
+	global TANK, START_BUTTON, RIVER, WALL, GRASS, GREEN_TANK, RED_TANK, BULLET, BLEW_TANK, LEAVE_SESSION_BUTTON, SPAWN, BOOST_BAR
 
 	TANK = None
 	START_BUTTON = pygame.transform.scale(pygame.image.load('sprites/buttons/start_button.png'), START_BUTTON_SIZE)
@@ -84,5 +89,8 @@ def init():
 				"left":pygame.transform.scale(pygame.image.load('sprites/bullet/shot_left.png'), SHOT_SIZE),}
 
 	BLEW_TANK = [pygame.transform.scale(pygame.image.load('sprites/animations/tank_boom_1.png'), TANK_SIZE), pygame.transform.scale(pygame.image.load('sprites/animations/tank_boom_2.png'), TANK_SIZE)]
+
+	BOOST_BAR = {"bar":pygame.transform.scale(pygame.image.load('sprites/yellow_bar.png'), BOOST_BAR_SIZE),
+				 "background":pygame.transform.scale(pygame.image.load('sprites/grey_bar.png'), BOOST_BAR_SIZE)}
 
 init()

@@ -1,6 +1,8 @@
 import copy
 import images
+
 from constants import *
+from datetime import datetime
 
 
 class Button:
@@ -70,6 +72,7 @@ class Tank:
 		self.death_animation_iteration = 0
 
 		self.boost = False
+		self.boost_timer = datetime.now()
 
 	def move(self, map_objects, rotation):
 		self.image = self.images[rotation]
@@ -113,10 +116,10 @@ class Tank:
 						self.rect.x += current_speed
 						return
 
-	def general_update(self):
+	def general_update(self, force=False):
 		if self.boost:
-			if 'boost' not in self.additional_images:
-				self.turn_on_boost()
+			#if 'boost' not in self.additional_images:
+			#	self.turn_on_boost(force = True)
 
 			#print(self.additional_images)
 
@@ -125,6 +128,11 @@ class Tank:
 				self.additional_images['boost'][-i]['image'].set_alpha(self.min_shadow_alpha + self.shadows_alpha_range*(i-1))
 
 			self.additional_images['boost'][0] = {'image':copy.copy(self.image), 'position':(self.rect.x, self.rect.y)}
+
+			if not force and (datetime.now() - self.boost_timer).total_seconds() > BOOST_DURATION:
+				self.turn_off_boost()
+
+
 		elif 'boost' in self.additional_images:
 			del self.additional_images['boost']
 
@@ -138,9 +146,12 @@ class Tank:
 		self.alive = alive
 
 		if self.boost != Ellipsis:
-			self.boost = boost
-
-		self.general_update()
+			if not self.boost and boost:
+				self.turn_on_boost(force = True)
+			elif self.boost and not boost:
+			#self.boost = boost
+				self.turn_off_boost(force=True)
+			self.general_update(force=True)
 
 		self.shoot_iteration += 1
 
@@ -155,7 +166,15 @@ class Tank:
 
 		return False
 
-	def turn_on_boost(self):
+	def turn_on_boost(self, force=False):
+		if not force:
+			if self.boost or (datetime.now() - self.boost_timer).total_seconds() < BOOST_RECOVERY_DURATION:
+				return
+
+			self.boost_timer = datetime.now()
+
+		self.boost = True
+
 		amount_of_shadows = 6
 		self.min_shadow_alpha = 0
 		self.shadows_alpha_range = (255 - self.min_shadow_alpha) / amount_of_shadows
@@ -168,7 +187,11 @@ class Tank:
 			img['image'].set_alpha(255 - self.shadows_alpha_range * i)
 			self.additional_images[images_name].append(img)
 
-	def turn_off_boost(self):
+	def turn_off_boost(self, force=False):
+		if not force:
+			self.boost_timer = datetime.now()
+
+		self.boost = False
 		self.additional_images['boost'] = []
 
 

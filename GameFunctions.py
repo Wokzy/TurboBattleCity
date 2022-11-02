@@ -1,4 +1,9 @@
-import images, hashlib, random, utils
+import utils
+import pygame
+import images
+import random
+import hashlib
+
 from constants import *
 from scripts import objects, maps
 from datetime import datetime, timedelta
@@ -33,6 +38,8 @@ class GameFunctions:
 		self.grass = []
 		self.ammunition = AMMUNITION_SIZE
 		self.ammunition_string = str(self.ammunition)
+		self.boost_bar = images.get_boost_bar()['bar']
+		self.boost_bar_background = images.get_boost_bar()['background']
 		self.immunity_timer = None
 		self.death_timer = None
 
@@ -193,13 +200,7 @@ class GameFunctions:
 		self.ammunition_string = str(AMMUNITION_SIZE)
 
 
-	def update_battle(self):
-		self.player.shoot_iteration += 1
-		self.player.general_update()
-
-		if self.immunity_timer != None and (datetime.now() - self.immunity_timer).total_seconds() >= IMMUNITY_DURATION:
-			self.immunity_timer = None
-
+	def update_ui(self):
 		if type(self.ammunition) != type(1):
 			time_diff = (datetime.now() - self.ammunition).total_seconds()
 			if time_diff >= AMMUNITION_RELOAD_SPEED:
@@ -208,6 +209,23 @@ class GameFunctions:
 				self.ammunition_string = '{:.1f}'.format(AMMUNITION_RELOAD_SPEED - time_diff)
 		else:
 			self.ammunition_string = str(self.ammunition)
+
+		if self.player.boost:
+			self.boost_bar = pygame.transform.scale(self.boost_bar, (BOOST_BAR_SIZE[0], 
+								BOOST_BAR_SIZE[1] * max(0.1, (BOOST_DURATION - (datetime.now() - self.player.boost_timer).total_seconds()) / BOOST_DURATION)))
+		else:
+			self.boost_bar = pygame.transform.scale(self.boost_bar, (BOOST_BAR_SIZE[0], 
+								BOOST_BAR_SIZE[1] * min(1.0, max(0.1, (datetime.now() - self.player.boost_timer).total_seconds() / BOOST_RECOVERY_DURATION))))
+
+
+	def update_battle(self):
+		self.player.shoot_iteration += 1
+		self.player.general_update()
+
+		if self.immunity_timer != None and (datetime.now() - self.immunity_timer).total_seconds() >= IMMUNITY_DURATION:
+			self.immunity_timer = None
+
+		self.update_ui()
 
 
 	def shoot(self, tank):

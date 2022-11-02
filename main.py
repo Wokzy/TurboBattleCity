@@ -94,7 +94,6 @@ class Main:
 
 
 	def main(self, gf):
-		#gf.start_battle()
 		self.screen.fill((0, 0, 0))
 		while True:
 
@@ -110,7 +109,7 @@ class Main:
 
 	def update(self, gf):
 
-		self.event_update()
+		self.event_handling()
 
 		if gf.game_status == 0:
 			res = gf.main_menu_update(socket = self.s, get_information = self.get_information)
@@ -319,7 +318,6 @@ class Main:
 			score_lenth_unit = (SCORE_FONT_SIZE)*(len(self.scores)*1.25 - 1)
 			score_coords = (WIDTH // 2 - (score_lenth_unit // 2) - SCORE_FONT_SIZE*.5 + (SCORE_FONT_SIZE + SCORE_FONT_SIZE*0.85)*i, AVERAGE_MULTIPLYER)
 			nick_coords = (score_coords[0]+(SCORE_FONT_SIZE - (NICK_FONT_SIZE*len(self.scores[i][2])))//4, score_coords[1] + SCORE_FONT_SIZE + AVERAGE_MULTIPLYER)
-			# 
 			self.screen.blit(self.scores[i][0], score_coords)
 			self.screen.blit(self.scores[i][1], nick_coords)
 
@@ -347,8 +345,11 @@ class Main:
 		except Exception as e:
 			print(e) #pass
 		ammunation = self.ammunition_font.render(gf.ammunition_string, False, (255, 75, 75))
-		ammunation_position = (0, HEIGHT - AMMUNITION_FONT_SIZE)
+		boost_bar_position = (1, HEIGHT - gf.boost_bar.get_height())
+		ammunation_position = (BOOST_BAR_SIZE[0] + 2*AVERAGE_MULTIPLYER, HEIGHT - AMMUNITION_FONT_SIZE)
 		self.screen.blit(ammunation, ammunation_position)
+		self.screen.blit(gf.boost_bar_background, (1, HEIGHT - BOOST_BAR_SIZE[1]))
+		self.screen.blit(gf.boost_bar, boost_bar_position)
 
 
 	def blit_bullets(self, gf):
@@ -377,7 +378,7 @@ class Main:
 			self.screen.blit(obj.image, obj.rect)
 
 
-	def event_update(self):
+	def event_handling(self):
 		pressed_keys = pygame.key.get_pressed()
 
 		for event in pygame.event.get():
@@ -394,7 +395,8 @@ class Main:
 				#	gf.player.alive = False
 
 		if gf.game_status == 1 and gf.player != None and gf.player.alive:# and self.iterations % MOVEMENT_TICKS == 0:
-			gf.player.boost = pressed_keys[pygame.K_LSHIFT] or pressed_keys[pygame.K_RSHIFT]
+			if (pressed_keys[pygame.K_LSHIFT] or pressed_keys[pygame.K_RSHIFT]):
+				gf.player.turn_on_boost()
 
 			if pressed_keys[pygame.K_UP]:
 				gf.player.move(gf.map_objects, 'forward')
