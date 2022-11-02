@@ -167,7 +167,7 @@ class Main:
 					else:
 						obj.image = obj.images['filled']
 
-				if self.process_player_death(gf.player):
+				if gf.player.process_death():
 					gf.player = None
 					gf.death_timer = datetime.now()
 
@@ -181,8 +181,8 @@ class Main:
 							gf.players[player].show_nickname = False
 							break
 
-				if self.process_player_death(gf.players[player]):
-					rm_lst.append(player)
+					if gf.players[player].process_death():
+						rm_lst.append(player)
 
 			for obj in rm_lst:
 				del gf.players[obj]
@@ -215,7 +215,7 @@ class Main:
 							obj.image = obj.images['filled']
 
 			for player in gf.players:
-				if self.process_player_death(gf.players[player]):
+				if gf.players[player].process_death():
 					rm_lst.append(player)
 
 			for obj in rm_lst:
@@ -233,20 +233,9 @@ class Main:
 	def it_is_time_to_update_server(self):
 		return (datetime.now() - self.server_update_timer).total_seconds() >= self.server_update_time
 
+
 	def reset_server_update_timer(self):
 		self.server_update_timer = datetime.now()
-
-	def process_player_death(self, player):
-		if player != None and player.alive == False:
-			player.death_animation_iteration += 1
-			if player.death_animation_iteration <= player.death_animation_speed:
-				player.image = player.death_images[0]
-			elif player.death_animation_iteration > player.death_animation_speed * 2:
-				return True
-			else:
-				player.image = player.death_images[1]
-
-		return False
 
 
 	def struct_players_info(self, gf, players_info):

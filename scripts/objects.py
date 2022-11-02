@@ -118,6 +118,17 @@ class Tank:
 
 		self.shoot_iteration += 1
 
+	def process_death(self):
+		if self.alive == False:
+			self.death_animation_iteration += 1
+
+			if self.death_animation_iteration >= self.death_animation_speed * len(self.death_images):
+				return True
+			else:
+				self.image = self.death_images[self.death_animation_iteration // self.death_animation_speed]
+
+		return False
+
 
 
 class Bullet:
