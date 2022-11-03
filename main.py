@@ -127,14 +127,15 @@ class Main:
 				if death_time >= DEATH_DURATION:
 					gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index])
 					gf.player_status = 'default'
-					gf.immunity_timer = datetime.now()
+					gf.player.set_immunity()
 					gf.load_ammunition()
 				else:
 					gf.ammunition_string = '{:.1f}'.format(DEATH_DURATION - death_time)
 			else:
 				gf.update_battle()
 				self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
-									"nickname":gf.nickname_string, "spawn_index":self.spawn_index, 'alive':int(gf.player.alive), 'boost':int(gf.player.boost)}
+									"nickname":gf.nickname_string, "spawn_index":self.spawn_index, 'alive':int(gf.player.alive),
+									'statuses':{"boost":int(gf.player.boost), "immunity":int(gf.player.immunity)}}
 
 
 			if self.it_is_time_to_update_server():
@@ -254,13 +255,14 @@ class Main:
 			spawn_index = player['spawn_index']
 			score = str(player['score'])
 			alive = player['alive']
-			boost = player['boost']
+			boost = player['statuses']['boost']
+			immunity = player['statuses']['immunity']
 
 			self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
 								self.info_font.render(nickname, False, (255, 255, 255)), nickname))
 
 			if addr in gf.players:
-				gf.players[addr].update(x, y, rot, score, alive=bool(alive), boost=bool(boost))
+				gf.players[addr].update(x, y, rot, score, alive=bool(alive), boost=bool(boost), immunity=bool(immunity))
 			elif alive:
 				gf.players[addr] = objects.Tank(False, (x, y), rot, shoot_speed=TANK_SHOOT_SPEED//2, spawn_index=spawn_index)
 				gf.players[addr].nickname = self.nickname_font.render(nickname, False, (255, 255, 255))
@@ -283,7 +285,7 @@ class Main:
 						break
 
 
-			if gf.game_status == 1 and gf.player != None and bullet.rect.colliderect(gf.player.rect) and gf.immunity_timer == None:
+			if gf.game_status == 1 and gf.player != None and bullet.rect.colliderect(gf.player.rect) and not gf.player.immunity:
 				if gf.player.alive:
 					gf.player.alive = False
 					if bullet.shooter.spawn_index != None:
@@ -326,11 +328,14 @@ class Main:
 			if type(imgs[key]) == list:
 				for img in imgs[key]:
 					self.screen.blit(img['image'], img['position'])
+			elif type(imgs[key]) == dict:
+				self.screen.blit(imgs[key]['image'], imgs[key]['position'])
 
 	def blit_other_players(self, gf):
 		for player in gf.players:
 			self.blit_additional_images(gf.players[player].additional_images)
 			self.screen.blit(gf.players[player].image, gf.players[player].rect)
+			self.blit_additional_images(gf.players[player].top_additional_images)
 			if gf.players[player].show_nickname:
 				self.screen.blit(gf.players[player].nickname, (gf.players[player].rect.x, gf.players[player].rect.y - 8*AVERAGE_MULTIPLYER))
 
@@ -340,6 +345,7 @@ class Main:
 			if gf.player != None:
 				self.blit_additional_images(gf.player.additional_images)
 				self.screen.blit(gf.player.image, gf.player.rect)
+				self.blit_additional_images(gf.player.top_additional_images)
 				if gf.player.show_nickname:
 					self.screen.blit(gf.nickname, (gf.player.rect.x, gf.player.rect.y - 8*AVERAGE_MULTIPLYER))
 		except Exception as e:

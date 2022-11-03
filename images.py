@@ -61,9 +61,13 @@ def get_boost_bar():
 	global BOOST_BAR
 	return BOOST_BAR
 
+def get_immortality_patternts():
+	global IMMORTALITY_PATTERNS
+	return IMMORTALITY_PATTERNS
+
 
 def init():
-	global TANK, START_BUTTON, RIVER, WALL, GRASS, GREEN_TANK, RED_TANK, BULLET, BLEW_TANK, LEAVE_SESSION_BUTTON, SPAWN, BOOST_BAR
+	global TANK, START_BUTTON, RIVER, WALL, GRASS, GREEN_TANK, RED_TANK, BULLET, BLEW_TANK, LEAVE_SESSION_BUTTON, SPAWN, BOOST_BAR, IMMORTALITY_PATTERNS
 
 	TANK = None
 	START_BUTTON = pygame.transform.scale(pygame.image.load('sprites/buttons/start_button.png'), START_BUTTON_SIZE)
@@ -82,6 +86,11 @@ def init():
 				"forward":pygame.transform.scale(pygame.image.load('sprites/red_tank/tank_forward.png'), TANK_SIZE),
 				"right":pygame.transform.scale(pygame.image.load('sprites/red_tank/tank_right.png'), TANK_SIZE),
 				"left":pygame.transform.scale(pygame.image.load('sprites/red_tank/tank_left.png'), TANK_SIZE),}
+
+	IMMORTALITY_PATTERNS = {"back":pygame.transform.scale(pygame.image.load('sprites/tank_patterns/immortality_back.png'), IMMORTALITY_PATTERN_SIZE),
+				"forward":pygame.transform.scale(pygame.image.load('sprites/tank_patterns/immortality_forward.png'), IMMORTALITY_PATTERN_SIZE),
+				"right":pygame.transform.scale(pygame.image.load('sprites/tank_patterns/immortality_right.png'), IMMORTALITY_PATTERN_SIZE),
+				"left":pygame.transform.scale(pygame.image.load('sprites/tank_patterns/immortality_left.png'), IMMORTALITY_PATTERN_SIZE),}
 
 	BULLET = {"back":pygame.transform.scale(pygame.image.load('sprites/bullet/shot_back.png'), SHOT_SIZE),
 				"forward":pygame.transform.scale(pygame.image.load('sprites/bullet/shot_forward.png'), SHOT_SIZE),

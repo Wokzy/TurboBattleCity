@@ -46,6 +46,8 @@ class MapObject:
 
 class Tank:
 	def __init__(self, player, position, rotation='forward', shoot_speed=TANK_SHOOT_SPEED, spawn_index=None):
+		self.player = player
+
 		if player == True:
 			self.images = images.get_green_tank()
 		else:
@@ -56,6 +58,7 @@ class Tank:
 		self.rotation = rotation
 		self.image = self.images[rotation]
 		self.additional_images = {}
+		self.top_additional_images = {}
 		self.rect = self.image.get_rect()
 		self.rect.x = position[0]
 		self.rect.y = position[1]
@@ -73,6 +76,9 @@ class Tank:
 
 		self.boost = False
 		self.boost_timer = datetime.now()
+
+		self.immunity = False
+		self.immunity_timer = None
 
 	def move(self, map_objects, rotation):
 		self.image = self.images[rotation]
@@ -136,14 +142,24 @@ class Tank:
 		elif 'boost' in self.additional_images:
 			del self.additional_images['boost']
 
+		if self.immunity:
+			self.top_additional_images['immunity'] = {'image':images.get_immortality_patternts()[self.rotation], 'position':(self.rect.x, self.rect.y)}
+			if self.immunity_timer != None and (datetime.now() - self.immunity_timer).total_seconds() >= IMMUNITY_DURATION:
+				self.immunity_timer = None
+				self.immunity = False
+		elif 'immunity' in self.top_additional_images:
+			del self.top_additional_images['immunity']
 
-	def update(self, x, y, rotation, score=0, alive=True, boost=...):
+
+
+	def update(self, x, y, rotation, score=0, alive=True, boost=..., immunity=False):
 		self.image = self.images[rotation]
 		self.rotation = rotation
 		self.rect.x = x
 		self.rect.y = y
 		self.score = score
 		self.alive = alive
+		self.immunity = immunity
 
 		if self.boost != Ellipsis:
 			if not self.boost and boost:
@@ -187,12 +203,18 @@ class Tank:
 			img['image'].set_alpha(255 - self.shadows_alpha_range * i)
 			self.additional_images[images_name].append(img)
 
+
 	def turn_off_boost(self, force=False):
 		if not force:
 			self.boost_timer = datetime.now()
 
 		self.boost = False
 		self.additional_images['boost'] = []
+
+
+	def set_immunity(self):
+		self.immunity_timer = datetime.now()
+		self.immunity = True
 
 
 

@@ -40,7 +40,6 @@ class GameFunctions:
 		self.ammunition_string = str(self.ammunition)
 		self.boost_bar = images.get_boost_bar()['bar']
 		self.boost_bar_background = images.get_boost_bar()['background']
-		self.immunity_timer = None
 		self.death_timer = None
 
 
@@ -221,9 +220,6 @@ class GameFunctions:
 	def update_battle(self):
 		self.player.shoot_iteration += 1
 		self.player.general_update()
-
-		if self.immunity_timer != None and (datetime.now() - self.immunity_timer).total_seconds() >= IMMUNITY_DURATION:
-			self.immunity_timer = None
 
 		self.update_ui()
 
