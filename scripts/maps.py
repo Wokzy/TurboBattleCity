@@ -30,7 +30,7 @@ LEVEL_1 =\
 		['s ww w         w',\
 		 '       rrr     w',\
 		 ' w rr r        w',\
-		 '  b       b     ',\
+		 '          b     ',\
 		 '     ggg      g ',\
 		 '  w  w       gg ',\
 		 '           gggg ',\
@@ -51,12 +51,12 @@ LEVEL_2 =\
 		 ' g g    ggg w   ',\
 		 'wg  ggggrrr   g ',\
 		 's w grr g g  gg ',\
-		 '    ggggggggggg ',\
-		 'w r rrrr gg     ',\
-		 ' gg w ggggg  rgw',\
+		 ' b  ggggggggggg ',\
+		 'w r rrrrbgg     ',\
+		 ' gg w ggggg brgw',\
 		 'gw  gggrg  rrs  ',\
-		 'gr gg  gw   w  g',\
-		 'gwg    ws g    w',\
+		 'gr gg  gw b w  g',\
+		 'gwg   bws g    w',\
 		 'g   r r g  gwg  ',\
 		 '  r  rrggrw s w ',\
 		 ' s     s  ggggg ',]

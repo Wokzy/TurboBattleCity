@@ -80,6 +80,8 @@ class Tank:
 		self.immunity = False
 		self.immunity_timer = None
 
+		self.show_nickname = True
+
 	def move(self, map_objects, rotation):
 		self.image = self.images[rotation]
 		self.rotation = rotation
@@ -122,20 +124,27 @@ class Tank:
 						self.rect.x += current_speed
 						return
 
-	def general_update(self, force=False):
+
+	def update_boost_images(self):
+		if 'boost' not in self.additional_images or self.additional_images['boost'] == []:
+			self.generate_boost_images()
+
+		for i in range(1, len(self.additional_images['boost'])):
+			self.additional_images['boost'][-i] = self.additional_images['boost'][-i-1]
+			self.additional_images['boost'][-i]['image'].set_alpha(self.min_shadow_alpha + self.shadows_alpha_range*(i-1))
+
+		self.additional_images['boost'][0] = {'image':copy.copy(self.image), 'position':(self.rect.x, self.rect.y)}
+
+
+	def general_update(self, runes=None):
 		if self.boost:
 			#if 'boost' not in self.additional_images:
 			#	self.turn_on_boost(force = True)
 
 			#print(self.additional_images)
 
-			for i in range(1, len(self.additional_images['boost'])):
-				self.additional_images['boost'][-i] = self.additional_images['boost'][-i-1]
-				self.additional_images['boost'][-i]['image'].set_alpha(self.min_shadow_alpha + self.shadows_alpha_range*(i-1))
-
-			self.additional_images['boost'][0] = {'image':copy.copy(self.image), 'position':(self.rect.x, self.rect.y)}
-
-			if not force and (datetime.now() - self.boost_timer).total_seconds() > BOOST_DURATION:
+			self.update_boost_images()
+			if self.player and runes[BOOST_RUNE_NAME] == False and (datetime.now() - self.boost_timer).total_seconds() > BOOST_DURATION:
 				self.turn_off_boost()
 
 
@@ -144,6 +153,8 @@ class Tank:
 
 		if self.immunity:
 			self.top_additional_images['immunity'] = {'image':images.get_immortality_patternts()[self.rotation], 'position':(self.rect.x, self.rect.y)}
+			if self.player and runes[IMMUNITY_RUNE_NAME] != False:
+				return
 			if self.immunity_timer != None and (datetime.now() - self.immunity_timer).total_seconds() >= IMMUNITY_DURATION:
 				self.immunity_timer = None
 				self.immunity = False
@@ -163,11 +174,11 @@ class Tank:
 
 		if self.boost != Ellipsis:
 			if not self.boost and boost:
-				self.turn_on_boost(force = True)
+				self.turn_on_boost()
 			elif self.boost and not boost:
 			#self.boost = boost
-				self.turn_off_boost(force=True)
-			self.general_update(force=True)
+				self.turn_off_boost()
+			self.general_update()
 
 		self.shoot_iteration += 1
 
@@ -182,15 +193,18 @@ class Tank:
 
 		return False
 
-	def turn_on_boost(self, force=False):
-		if not force:
+	def turn_on_boost(self):
+		if self.player:
 			if self.boost or (datetime.now() - self.boost_timer).total_seconds() < BOOST_RECOVERY_DURATION:
 				return
 
 			self.boost_timer = datetime.now()
 
 		self.boost = True
+		self.generate_boost_images()
 
+
+	def generate_boost_images(self):
 		amount_of_shadows = 6
 		self.min_shadow_alpha = 0
 		self.shadows_alpha_range = (255 - self.min_shadow_alpha) / amount_of_shadows
@@ -204,8 +218,8 @@ class Tank:
 			self.additional_images[images_name].append(img)
 
 
-	def turn_off_boost(self, force=False):
-		if not force:
+	def turn_off_boost(self):
+		if self.player:
 			self.boost_timer = datetime.now()
 
 		self.boost = False

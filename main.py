@@ -136,6 +136,7 @@ class Main:
 				self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
 									"nickname":gf.nickname_string, "spawn_index":self.spawn_index, 'alive':int(gf.player.alive),
 									'statuses':{"boost":int(gf.player.boost), "immunity":int(gf.player.immunity)}}
+				self.update_player(gf)
 
 
 			if self.it_is_time_to_update_server():
@@ -157,23 +158,9 @@ class Main:
 
 			self.update_bullets(gf)
 
-
-			if gf.player != None:
-				gf.player.show_nickname = True
-				for obj in gf.grass:
-					if obj.rect.colliderect(gf.player.rect):
-						obj.image = obj.images['transparent']
-						gf.player.show_nickname = False
-					else:
-						obj.image = obj.images['filled']
-
-				if gf.player.process_death():
-					gf.player = None
-					gf.death_timer = datetime.now()
-
 			rm_lst = []
 
-			for player in gf.players:
+			for player in gf.players: # gf.players is dict
 				if gf.players[player] != None:
 					gf.players[player].show_nickname = True
 					for obj in gf.grass:
@@ -226,6 +213,23 @@ class Main:
 			self.iterations = 0
 
 
+	def update_player(self, gf):
+		gf.player.show_nickname = True
+		for obj in gf.grass:
+			if obj.rect.colliderect(gf.player.rect):
+				obj.image = obj.images['transparent']
+				gf.player.show_nickname = False
+			else:
+				obj.image = obj.images['filled']
+
+		for rune in gf.runes: # gf.runes is list
+			if rune['rect'].colliderect(gf.player.rect):
+				self.player_data['rune_collected'] = rune['id']
+
+		if gf.player.process_death():
+			gf.player = None
+			gf.death_timer = datetime.now()
+
 	def message_has_an_error(self, message):
 		return '_error' in message
 
@@ -242,7 +246,9 @@ class Main:
 		self.scores = []
 		self.struct_self_info(gf, players_info['player_info'])
 
-		for player in players_info['other_players']:
+		players_info = players_info['other_players']
+
+		for player in players_info:
 			if type(player) == type(0):
 				gf.score = player
 				continue
@@ -279,7 +285,9 @@ class Main:
 		for key in info:
 			if key == 'runes':
 				gf.runes = info[key]
-				#print(gf.runes)
+				gf.set_up_runes()
+			elif key == 'rune_collected':
+				gf.activate_rune(rune=info[key]) # string
 
 
 	def update_bullets(self, gf):
@@ -372,9 +380,8 @@ class Main:
 
 
 	def blit_runes(self, gf):
-		imgs = images.get_runes()
 		for rune in gf.runes:
-			self.screen.blit(imgs[rune['rune']]['state'], rune['coords'])
+			self.screen.blit(rune['image'], rune['coords'])
 
 
 	def blit_objects(self, gf):

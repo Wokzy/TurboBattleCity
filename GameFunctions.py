@@ -35,6 +35,7 @@ class GameFunctions:
 		self.players = {}
 		self.bullets = []
 		self.runes = []
+		self.active_runes = {i:False for i in RUNES_CONFIG['runes']}
 		self.added_bullets = []
 		self.grass = []
 		self.ammunition = AMMUNITION_SIZE
@@ -232,9 +233,43 @@ class GameFunctions:
 								BOOST_BAR_SIZE[1] * min(1.0, max(0.1, (datetime.now() - self.player.boost_timer).total_seconds() / BOOST_RECOVERY_DURATION))))
 
 
+	def set_up_runes(self):
+		for i in range(len(self.runes)):
+			if 'rect' not in self.runes[i] or 'image' not in self.runes[i]:
+				self.runes[i]['image'] = images.get_runes()[self.runes[i]['rune']]['state']
+				self.runes[i]['rect'] = self.runes[i]['image'].get_rect()
+				self.runes[i]['rect'].x = self.runes[i]['coords'][0]
+				self.runes[i]['rect'].y = self.runes[i]['coords'][1]
+
+
+	def update_active_runes(self):
+		for rune in self.active_runes:
+			if self.active_runes[rune] != False and (datetime.now() - self.active_runes[rune]).total_seconds() > RUNES_CONFIG['activity_times'][rune]:
+				self.active_runes[rune] = False
+				self.deactivate_rune(rune)
+
+
+	def activate_rune(self, rune:str):
+		self.active_runes[rune] = datetime.now()
+		self.change_player_state_on_rune(rune = rune, ch = True)
+
+
+	def deactivate_rune(self, rune:str):
+		self.change_player_state_on_rune(rune = rune, ch = False)
+
+
+	def change_player_state_on_rune(self, rune:str, ch:bool):
+		if rune == BOOST_RUNE_NAME:
+			self.player.boost = ch
+		elif rune == IMMUNITY_RUNE_NAME:
+			self.player.immunity = ch
+
+
 	def update_battle(self):
 		self.player.shoot_iteration += 1
-		self.player.general_update()
+		self.player.general_update(self.active_runes)
+
+		self.update_active_runes()
 
 		self.update_ui()
 
@@ -258,10 +293,12 @@ class GameFunctions:
 		tank.shouted = True
 		tank.shoot_iteration = 0
 
+
 	def go_on_reload(self):
 		if type(self.ammunition) == type(1):
 			if self.ammunition != AMMUNITION_SIZE:
 				self.ammunition = datetime.now()
+
 
 	def player_ready_to_shoot(self):
 		if type(self.ammunition) == type(1):
@@ -269,6 +306,7 @@ class GameFunctions:
 				return True
 			self.go_on_reload()
 		return False
+
 
 	def change_nickname(self, new_nick):
 		self.nickname_string = new_nick[:12:]

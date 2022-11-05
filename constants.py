@@ -1,7 +1,7 @@
 import json
 
 GAME_NAME = 'Turbo Batlle City'
-GAME_VERSION = 'v0.1.0-alpha'
+GAME_VERSION = 'Development patch' # Development patch
 
 CONFIG_FILE = 'config.json'
 
@@ -29,12 +29,12 @@ TICK_RATE = 64
 MOVEMENT_TICKS = FPS / 60
 BULLET_SPEED = (3.5*AVERAGE_MULTIPLYER) / MOVEMENT_TICKS
 TANK_SPEED = (1*AVERAGE_MULTIPLYER) / MOVEMENT_TICKS
-TANK_SPEED_BOOST_MULTIPLYER = 2
+TANK_SPEED_BOOST_MULTIPLYER = 2 # when boost is on TANK_SPEED = TANK_SPEED * TANK_SPEED_BOOST_MULTIPLYER
 TANK_SHOOT_SPEED = FPS
 AMMUNITION_SIZE = 5
 AMMUNITION_RELOAD_SPEED = 4.75 # Float
-IMMUNITY_DURATION = 1.75
-DEATH_DURATION = 2.0
+IMMUNITY_DURATION = 1.75 # Immunity after respawn
+DEATH_DURATION = 2.0 # Time for being out after death
 BOOST_DURATION = 2.25
 BOOST_RECOVERY_DURATION = 5.0
 
@@ -53,7 +53,14 @@ RUNE_SIZE = (10*OBJECT_MULTIPLYER_WIDTH, 12*OBJECT_MULTIPLYER_HEIGHT)
 
 MAP_COORD_SHIFT = (25*AVERAGE_MULTIPLYER, 25*AVERAGE_MULTIPLYER) #25*AVERAGE_MULTIPLYER
 
-RUNES_CONFIG = {'runes':['haste', 'immortality'], 'timer':5} # timer in seconds
+
+# RUNES
+
+BOOST_RUNE_NAME = 'haste'
+IMMUNITY_RUNE_NAME = 'immortality'
+
+RUNES_CONFIG = {'spawn_timer':5, 'activity_times':{BOOST_RUNE_NAME:5, IMMUNITY_RUNE_NAME:4}} # each time is in seconds
+RUNES_CONFIG['runes'] = [rune for rune in RUNES_CONFIG['activity_times']]
 
 GAME_FONT = 'Terminus.ttf'
 SYS_FONT = 'Ubuntu'

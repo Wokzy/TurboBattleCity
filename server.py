@@ -151,8 +151,7 @@ class Server:
 				player_info['rune_collected'] = self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed']
 				self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed'] = False
 
-		player_info['runes'] = [{'rune':self.sessions[session_id]['runes']['runes'][i]['is_placed'], 'coords':self.sessions[session_id]['runes']['runes'][i]['coords']} for i in self.sessions[session_id]['runes']['runes'] if self.sessions[session_id]['runes']['runes'][i]['is_placed'] != False]
-
+		player_info['runes'] = [{'rune':self.sessions[session_id]['runes']['runes'][i]['is_placed'], 'coords':self.sessions[session_id]['runes']['runes'][i]['coords'], 'id':i} for i in self.sessions[session_id]['runes']['runes'] if self.sessions[session_id]['runes']['runes'][i]['is_placed'] != False]
 
 		self.sessions[session_id]['players_data'][s] = self.players_data[s]['player_data']
 		self.sessions[session_id]['players_data'][s]['address'] = f"{s.getpeername()[0]}:{s.getpeername()[1]}" # ip:port
@@ -201,7 +200,7 @@ class Server:
 	def update_sessions(self):
 		now = datetime.now()
 		for session in self.sessions:
-			if (now - self.sessions[session]['runes']['timer']).total_seconds() >= RUNES_CONFIG['timer']:
+			if (now - self.sessions[session]['runes']['timer']).total_seconds() >= RUNES_CONFIG['spawn_timer']:
 				self.sessions[session]['runes']['timer'] = now
 				availible_spots = [i for i in self.sessions[session]['runes']['runes'] if self.sessions[session]['runes']['runes'][i]['is_placed'] == False]
 				if availible_spots:
