@@ -65,69 +65,69 @@ LEVEL_3 =\
 		['gg         ws   ',\
 		 'gsw  rrrw      r',\
 		 '   g        w rg',\
-		 ' w    w r     gg',\
+		 ' w   bw r  b  gg',\
 		 '   r gggg g g gw',\
-		 'w wg  sw r  g gg',\
-		 '    rrww rrrg  g',\
+		 'w wg  sw r bg gg',\
+		 '  b rrww rrrg  g',\
 		 's w gggggggg wg ',\
 		 '  g rgrw rrr   w',\
 		 '     g r r   w s',\
-		 ' w   g r r    gw',\
+		 ' w  bg r r  b gw',\
 		 'gggggg  ggg   g ',\
 		 'w r    g  rgggw ',\
-		 '    r  g    w sg',\
+		 '    r bg    w sg',\
 		 's wgggggggg   gg']
 
 LEVEL_4 =\
 		['g            w s',\
-		 'w r  rw   wgg   ',\
+		 'w r  rw  bwgg   ',\
 		 ' g w  s    gw  g',\
-		 's   g    w g  gw',\
-		 'wg    w     gr  ',\
+		 's   g  b w g  gw',\
+		 'wg  b w   b gr  ',\
 		 '   w  ggg  w   s',\
-		 ' wg gggwgg g  w ',\
-		 '  g gwgggr gg   ',\
-		 ' sw gggrgg  g  w',\
+		 ' wg gggwggbg  w ',\
+		 '  g gwgggr gg b ',\
+		 ' swbgggrgg  g  w',\
 		 'w    w w  gggw s',\
-		 'g  grg g  grg   ',\
+		 'g bgrg g  grg b ',\
 		 'gw w   sw ggg ww',\
-		 'gg  r  ww   g   ',\
-		 'w  ggggg     w s',\
+		 'gg  r bww   g   ',\
+		 'w  ggggg   b w s',\
 		 's   w     w     ']
 
 LEVEL_5 =\
 		['s w          w s',\
-		 '  g rggg r      ',\
+		 '  g rggg r b    ',\
 		 'w ggg r    r  ww',\
 		 '  ggggggggggggg ',\
-		 'g gggw     wggg ',\
+		 'gbgggw     wggg ',\
 		 'wwwg   www   www',\
-		 '  gw w     w  g ',\
+		 ' bgw wb   bw  g ',\
 		 's g  w  r  w  ws',\
-		 'g gw w     w  g ',\
+		 'g gw wb   bw  g ',\
 		 'g gg   www   www',\
 		 'rwgggw     wggg ',\
 		 'w ggggggggggggg ',\
-		 '   r gg   w  ggg',\
+		 ' b r gg  bw  ggg',\
 		 'wggg rg r  g w w',\
-		 '  gw  ggw r     ',\
+		 '  gw  ggw r b   ',\
 		 's g  w gggg w  s']
 
 LEVEL_6 =\
 		['s  w        w  s',\
 		 ' wgg          w ',\
-		 '    gg  w  ggg  ',\
+		 '    gg  wb ggg  ',\
 		 'w  wg w s w g  w',\
-		 'g    g  w  gg   ',\
+		 'g b  g  w  gg   ',\
 		 'g wsw gggggg   w',\
-		 'g    gw rggw    ',\
-		 ' w w g  g  g  w ',\
+		 'g  b gw rggw b  ',\
+		 ' w w gb gb g  w ',\
 		 ' s wggrgggrgw s ',\
 		 ' w  gg  g  gg w ',\
-		 '   wg w r  wgggg',\
-		 'g            g  ',\
-		 'wgwswg  w   gg w',\
-		 '     gw s w g   ',\
+		 '  bwg w rb wgggg',\
+		 'g      b     g  ',\
+		 'wgwswg  w  bgg w',\
+		 '     gwbs w g   ',\
 		 ' w w g  w  g  w ',\
 		 's  w  ggggg w  s']
 

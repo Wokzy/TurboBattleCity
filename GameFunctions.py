@@ -100,8 +100,13 @@ class GameFunctions:
 		while True:
 			try:
 				level, max_players = self.input_map_level()
-				session = {'level': level, 'runes':self.get_coords(level=level, obj = maps.RUNE, TYPE=list),
-							'max_players':min(max(int(input(f'Max players (2-{max_players}) -> ')), 2), max_players)}
+				max_players_choice = input(f'Max players (2-{max_players}) -> ')
+				if max_players_choice.isnumeric():
+					max_players = min(max(int(max_players_choice), 2), max_players)
+
+				session = {'level': level, 'runes':self.get_coords(level=level, obj = maps.RUNE, TYPE=list, move=(RUNE_SIZE[0]//2, RUNE_SIZE[1]//2)),
+							'max_players':max_players}
+
 				password = input('Enter password (leave empty for no password) -> ')
 				if password:
 					session['password'] = hashlib.md5(password.encode()).hexdigest()
@@ -162,12 +167,12 @@ class GameFunctions:
 		self.render_map(self.input_map_level()[0], True)
 
 
-	def get_coords(self, level, obj, TYPE = tuple):
+	def get_coords(self, level, obj, move=(0, 0), TYPE = tuple):
 		coords = []
 		for line in range(len(maps.LEVELS[level])):
 			for o in range(len(maps.LEVELS[level][line])):
 				if maps.LEVELS[level][line][o] == obj:
-					coords.append(TYPE((o*MAP_COORD_SHIFT[0], line*MAP_COORD_SHIFT[1])))
+					coords.append(TYPE((o*MAP_COORD_SHIFT[0] + move[0], line*MAP_COORD_SHIFT[1] + move[1])))
 
 		return coords
 

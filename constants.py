@@ -59,7 +59,7 @@ MAP_COORD_SHIFT = (25*AVERAGE_MULTIPLYER, 25*AVERAGE_MULTIPLYER) #25*AVERAGE_MUL
 BOOST_RUNE_NAME = 'haste'
 IMMUNITY_RUNE_NAME = 'immortality'
 
-RUNES_CONFIG = {'spawn_timer':5, 'activity_times':{BOOST_RUNE_NAME:5, IMMUNITY_RUNE_NAME:4}} # each time is in seconds
+RUNES_CONFIG = {'spawn_timer':15, 'activity_times':{BOOST_RUNE_NAME:5, IMMUNITY_RUNE_NAME:4}} # each time is in seconds
 RUNES_CONFIG['runes'] = [rune for rune in RUNES_CONFIG['activity_times']]
 
 GAME_FONT = 'Terminus.ttf'
