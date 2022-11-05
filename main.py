@@ -125,10 +125,7 @@ class Main:
 			if gf.player == None:
 				death_time = (datetime.now() - gf.death_timer).total_seconds()
 				if death_time >= DEATH_DURATION:
-					gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index])
-					gf.player_status = 'default'
-					gf.player.set_immunity()
-					gf.load_ammunition()
+					gf.respawn_player(position=self.positions[self.spawn_index], rotation=self.rotations[self.spawn_index])
 				else:
 					gf.ammunition_string = '{:.1f}'.format(DEATH_DURATION - death_time)
 			else:
@@ -301,8 +298,8 @@ class Main:
 						break
 
 
-			if gf.game_status == 1 and gf.player != None and bullet.rect.colliderect(gf.player.rect) and not gf.player.immunity:
-				if gf.player.alive:
+			if gf.game_status == 1 and gf.player != None and bullet.rect.colliderect(gf.player.rect):
+				if gf.player.alive and not gf.player.immunity:
 					gf.player.alive = False
 					if bullet.shooter.spawn_index != None:
 						self.add_score_to_killer = bullet.shooter.spawn_index

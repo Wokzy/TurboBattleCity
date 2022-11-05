@@ -226,7 +226,11 @@ class GameFunctions:
 			self.ammunition_string = str(self.ammunition)
 
 		if self.player.boost:
-			self.boost_bar = pygame.transform.scale(self.boost_bar, (BOOST_BAR_SIZE[0], 
+			if self.active_runes[BOOST_RUNE_NAME] != False:
+				self.boost_bar = pygame.transform.scale(self.boost_bar, (BOOST_BAR_SIZE[0], 
+								BOOST_BAR_SIZE[1] * max(0.1, (RUNES_CONFIG['activity_times'][BOOST_RUNE_NAME] - (datetime.now() - self.active_runes[BOOST_RUNE_NAME]).total_seconds()) / RUNES_CONFIG['activity_times'][BOOST_RUNE_NAME])))
+			else:
+				self.boost_bar = pygame.transform.scale(self.boost_bar, (BOOST_BAR_SIZE[0], 
 								BOOST_BAR_SIZE[1] * max(0.1, (BOOST_DURATION - (datetime.now() - self.player.boost_timer).total_seconds()) / BOOST_DURATION)))
 		else:
 			self.boost_bar = pygame.transform.scale(self.boost_bar, (BOOST_BAR_SIZE[0], 
@@ -247,6 +251,14 @@ class GameFunctions:
 			if self.active_runes[rune] != False and (datetime.now() - self.active_runes[rune]).total_seconds() > RUNES_CONFIG['activity_times'][rune]:
 				self.active_runes[rune] = False
 				self.deactivate_rune(rune)
+
+
+	def respawn_player(self, position, rotation):
+		self.player = objects.Tank(True, position, rotation)
+		self.player_status = 'default'
+		self.player.set_immunity()
+		self.load_ammunition()
+		self.active_runes = {i:False for i in RUNES_CONFIG['runes']}
 
 
 	def activate_rune(self, rune:str):
