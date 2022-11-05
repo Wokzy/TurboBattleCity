@@ -16,7 +16,12 @@ class Server:
 	def __init__(self):
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.sock = ssl.wrap_socket(self.sock, server_side=True, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
+
+		context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+		context.load_cert_chain('tbc_cert.pem', 'tbc_key.pem')
+
+		self.sock = context.wrap_socket(self.sock, server_side=True)
+		#self.sock = ssl.wrap_socket(self.sock, server_side=True, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
 
 		self.sock.bind((SERVER_IP, SERVER_PORT))
 		self.sock.listen(5)

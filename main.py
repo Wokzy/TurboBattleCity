@@ -446,8 +446,16 @@ class Main:
 	def connect(self):
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.s = ssl.wrap_socket(self.s, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
+
+		context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+		context.verify_mode = ssl.CERT_REQUIRED
+		context.load_verify_locations(cafile='tbc_cert.pem', capath=None, cadata=None)
+
+		self.s = context.wrap_socket(self.s)
+
+		#self.s = ssl.wrap_socket(self.s, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
 		self.s.connect(self.server)
+		print('Cipher used:', self.s.cipher())
 
 	def disconnect(self):
 		if self.s.fileno() != -1:
@@ -467,7 +475,7 @@ class Main:
 
 
 if __name__ == '__main__':
-	print(GAME_NAME, GAME_VERSION)
+	print(GAME_NAME, GAME_VERSION, end='\n\n')
 
 	gf = GameFunctions.GameFunctions()
 
