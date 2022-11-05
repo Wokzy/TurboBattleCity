@@ -1,5 +1,12 @@
 
-# w wall, r river, g grass, s spawn, 1 team one spawn, 2 team two spawn
+# w wall, r river, g grass, s spawn, b - rune (bonus)
+
+WALL = 'w'
+RIVER = 'r'
+GRASS = 'g'
+SPAWN = 's'
+RUNE = 'b'
+
 
 LEVEL_SAMPLE =\
 		['                ',\
@@ -23,15 +30,15 @@ LEVEL_1 =\
 		['s ww w         w',\
 		 '       rrr     w',\
 		 ' w rr r        w',\
-		 '                ',\
+		 '  b       b     ',\
 		 '     ggg      g ',\
 		 '  w  w       gg ',\
 		 '           gggg ',\
-		 '    w wr gg     ',\
+		 ' b  w wr gg     ',\
 		 '       gggg  rrr',\
 		 'w   gggrg    s  ',\
 		 'w  gg          g',\
-		 'w g            w',\
+		 'w g    b   b   w',\
 		 'w               ',\
 		 '      rrrr  s w ',\
 		 ' s            w ',]

@@ -240,8 +240,9 @@ class Main:
 
 	def struct_players_info(self, gf, players_info):
 		self.scores = []
+		self.struct_self_info(gf, players_info['player_info'])
 
-		for player in players_info:
+		for player in players_info['other_players']:
 			if type(player) == type(0):
 				gf.score = player
 				continue
@@ -272,6 +273,13 @@ class Main:
 				gf.shoot(gf.players[addr])
 			#elif status == 'dead':
 			#	gf.players[addr].alive = False
+
+
+	def struct_self_info(self, gf, info):
+		for key in info:
+			if key == 'runes':
+				gf.runes = info[key]
+				#print(gf.runes)
 
 
 	def update_bullets(self, gf):
@@ -363,6 +371,12 @@ class Main:
 			self.screen.blit(bullet.image, bullet.rect)
 
 
+	def blit_runes(self, gf):
+		imgs = images.get_runes()
+		for rune in gf.runes:
+			self.screen.blit(imgs[rune['rune']]['state'], rune['coords'])
+
+
 	def blit_objects(self, gf):
 		self.screen.fill((0, 0, 0))
 		if gf.game_status != 0:
@@ -373,6 +387,7 @@ class Main:
 					self.blit_player(gf)
 				self.blit_other_players(gf)
 				self.blit_bullets(gf)
+				self.blit_runes(gf)
 
 			self.blit_grass(gf)
 			#self.blit_text()

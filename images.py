@@ -65,9 +65,14 @@ def get_immortality_patternts():
 	global IMMORTALITY_PATTERNS
 	return IMMORTALITY_PATTERNS
 
+def get_runes():
+	global RUNES
+	return RUNES
+
 
 def init():
-	global TANK, START_BUTTON, RIVER, WALL, GRASS, GREEN_TANK, RED_TANK, BULLET, BLEW_TANK, LEAVE_SESSION_BUTTON, SPAWN, BOOST_BAR, IMMORTALITY_PATTERNS
+	global TANK, START_BUTTON, RIVER, WALL, GRASS, GREEN_TANK, RED_TANK, BULLET, BLEW_TANK
+	global LEAVE_SESSION_BUTTON, SPAWN, BOOST_BAR, IMMORTALITY_PATTERNS, RUNES
 
 	TANK = None
 	START_BUTTON = pygame.transform.scale(pygame.image.load('sprites/buttons/start_button.png'), START_BUTTON_SIZE)
@@ -101,5 +106,15 @@ def init():
 
 	BOOST_BAR = {"bar":pygame.transform.scale(pygame.image.load('sprites/yellow_bar.png'), BOOST_BAR_SIZE),
 				 "background":pygame.transform.scale(pygame.image.load('sprites/grey_bar.png'), BOOST_BAR_SIZE)}
+
+	RUNES = {
+			"haste":{
+					"state":pygame.transform.scale(pygame.image.load('sprites/runes/haste.png'), RUNE_SIZE)
+					},
+			"immortality":
+					{
+					"state":pygame.transform.scale(pygame.image.load('sprites/runes/immortality.png'), RUNE_SIZE)
+					}
+			}
 
 init()

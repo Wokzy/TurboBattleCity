@@ -34,6 +34,7 @@ class GameFunctions:
 		self.map_objects = []
 		self.players = {}
 		self.bullets = []
+		self.runes = []
 		self.added_bullets = []
 		self.grass = []
 		self.ammunition = AMMUNITION_SIZE
@@ -98,7 +99,7 @@ class GameFunctions:
 		while True:
 			try:
 				level, max_players = self.input_map_level()
-				session = {'level': level,
+				session = {'level': level, 'runes':self.get_coords(level=level, obj = maps.RUNE, TYPE=list),
 							'max_players':min(max(int(input(f'Max players (2-{max_players}) -> ')), 2), max_players)}
 				password = input('Enter password (leave empty for no password) -> ')
 				if password:
@@ -160,24 +161,38 @@ class GameFunctions:
 		self.render_map(self.input_map_level()[0], True)
 
 
+	def get_coords(self, level, obj, TYPE = tuple):
+		coords = []
+		for line in range(len(maps.LEVELS[level])):
+			for o in range(len(maps.LEVELS[level][line])):
+				if maps.LEVELS[level][line][o] == obj:
+					coords.append(TYPE((o*MAP_COORD_SHIFT[0], line*MAP_COORD_SHIFT[1])))
+
+		return coords
+
+
 	def render_map(self, level, show_spawns=False):
 		spawns = []
+		rune_spots = []
 
 		for line in maps.LEVELS[level]:
 			for obj in range(len(line)):
-				crds = (obj*25*AVERAGE_MULTIPLYER, maps.LEVELS[level].index(line)*25*AVERAGE_MULTIPLYER)
-				if line[obj] == 'w':
+				crds = (obj*MAP_COORD_SHIFT[0], maps.LEVELS[level].index(line)*MAP_COORD_SHIFT[1])
+				if line[obj] == maps.WALL:
 					self.map_objects.append(objects.MapObject(images.get_wall(), crds, destroy_bullets=True))
-				elif line[obj] == 'r':
+				elif line[obj] == maps.RIVER:
 					self.map_objects.append(objects.MapObject(images.get_river(), crds))
-				elif line[obj] == 'g':
+				elif line[obj] == maps.GRASS:
 					self.grass.append(objects.Grass(crds))
-				elif line[obj] == 's':
+				elif line[obj] == maps.SPAWN:
 					if show_spawns:
 						self.map_objects.append(objects.MapObject(images.get_spawn(), crds))
 					spawns.append(crds)
+				elif line[obj] == maps.RUNE:
+					rune_spots.append(crds)
 
-		return spawns
+
+		return {'spawns':spawns, 'rune_spots':rune_spots}
 
 
 	def start_battle(self):
@@ -185,7 +200,7 @@ class GameFunctions:
 		self.game_status = 1
 		self.score = 0
 
-		return self.render_map(self.level)
+		return self.render_map(self.level)['spawns']
 
 
 	def stop_battle(self):

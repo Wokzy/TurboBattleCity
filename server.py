@@ -5,10 +5,11 @@ import utils
 import random
 import socket
 import select
+import hashlib
 import sha256_hashsummer
 
-from constants import SERVER_PORT, SERVER_IP, ENCODING
 from datetime import datetime
+from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG
 
 
 class Server:
@@ -73,10 +74,12 @@ class Server:
 	def create_session(self, data):
 		session = json.loads(data.split('create_session')[1]) # "create_session{'session_id', 'bla', ...}"
 		session['players_data'] = {}
+		session['runes'] = {'runes':{hashlib.shake_128(str(random.randint(1, 10**21)).encode()).hexdigest(6):{'is_placed':False, 'coords':i} for i in session['runes']}, 'timer':datetime.now()} # is_palace takes rune type, wether rune is placed
 		session['creation_time'] = datetime.now()
-		self.sessions[session['session_id']] = session
 		session['spawns'] = [True] * session['max_players']
 		session['scores'] = {}
+
+		self.sessions[session['session_id']] = session
 
 
 	def check_player_files_validation(self, s, data):
@@ -135,14 +138,29 @@ class Server:
 
 
 	def process_players_data(self, s):
+		player_info = {}
 		self.players_data[s] = json.loads(self.players_data[s])
+
+		session_id = self.players_data[s]['session_id']
+
 		if 'killer' in self.players_data[s]['player_data']:
 			self.sessions[self.players_data[s]['session_id']]['scores'][self.players_data[s]['player_data']['killer']] += 1
-		self.sessions[self.players_data[s]['session_id']]['players_data'][s] = self.players_data[s]['player_data']
-		self.sessions[self.players_data[s]['session_id']]['players_data'][s]['address'] = f"{s.getpeername()[0]}:{s.getpeername()[1]}" # ip:port
-		self.sessions[self.players_data[s]['session_id']]['players_data'][s]['connection_time'] = datetime.now().timestamp()
-		self.sessions[self.players_data[s]['session_id']]['players_data'][s]['score'] = self.sessions[self.players_data[s]['session_id']]['scores'][self.players_data[s]['player_data']['spawn_index']]
-		s.send(utils.prepare_object_to_sending(self.collect_other_players_data(s)))
+		if 'rune_collected' in self.players_data[s]['player_data']:
+			collected_rune = self.players_data[s]['player_data']['rune_collected']
+			if collected_rune in self.sessions[session_id]['runes']['runes'] and self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed'] != False:
+				player_info['rune_collected'] = self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed']
+				self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed'] = False
+
+		player_info['runes'] = [{'rune':self.sessions[session_id]['runes']['runes'][i]['is_placed'], 'coords':self.sessions[session_id]['runes']['runes'][i]['coords']} for i in self.sessions[session_id]['runes']['runes'] if self.sessions[session_id]['runes']['runes'][i]['is_placed'] != False]
+
+
+		self.sessions[session_id]['players_data'][s] = self.players_data[s]['player_data']
+		self.sessions[session_id]['players_data'][s]['address'] = f"{s.getpeername()[0]}:{s.getpeername()[1]}" # ip:port
+		self.sessions[session_id]['players_data'][s]['connection_time'] = datetime.now().timestamp()
+		self.sessions[session_id]['players_data'][s]['score'] = self.sessions[session_id]['scores'][self.players_data[s]['player_data']['spawn_index']]
+
+		data = {'other_players':self.collect_other_players_data(s), 'player_info':player_info}
+		s.send(utils.prepare_object_to_sending(data))
 
 
 	def process_observing(self, s):
@@ -178,6 +196,18 @@ class Server:
 	def set_session_spawns_and_scores(self, session, index):
 		self.sessions[session]['spawns'][index] = True
 		self.sessions[session]['scores'][index] = 0
+
+
+	def update_sessions(self):
+		now = datetime.now()
+		for session in self.sessions:
+			if (now - self.sessions[session]['runes']['timer']).total_seconds() >= RUNES_CONFIG['timer']:
+				self.sessions[session]['runes']['timer'] = now
+				availible_spots = [i for i in self.sessions[session]['runes']['runes'] if self.sessions[session]['runes']['runes'][i]['is_placed'] == False]
+				if availible_spots:
+					self.sessions[session]['runes']['runes'][random.choice(availible_spots)]['is_placed'] = random.choice(RUNES_CONFIG['runes'])
+
+
 
 
 	def main(self):
@@ -231,6 +261,7 @@ class Server:
 			for s in self.exceptional:
 				self.disconnect(s)
 
+			self.update_sessions()
 			self.check_expired_players_and_sessions()
 
 			self.iteration += 1
