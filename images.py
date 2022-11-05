@@ -119,6 +119,10 @@ def init():
 					{
 					"state":pygame.transform.scale(pygame.image.load('sprites/runes/reveal.png'), SQUARE_RUNE_SIZE)
 					},
+			"ammo":
+					{
+					"state":pygame.transform.scale(pygame.image.load('sprites/runes/ammo.png'), WIDE_RUNE_SIZE)
+					}
 			}
 
 init()

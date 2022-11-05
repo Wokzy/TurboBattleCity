@@ -222,7 +222,7 @@ class GameFunctions:
 
 
 	def update_ui(self):
-		if type(self.ammunition) != type(1):
+		if type(self.ammunition) != int:
 			time_diff = (datetime.now() - self.ammunition).total_seconds()
 			if time_diff >= AMMUNITION_RELOAD_SPEED:
 				self.load_ammunition()
@@ -268,7 +268,8 @@ class GameFunctions:
 
 
 	def activate_rune(self, rune:str):
-		self.active_runes[rune] = datetime.now()
+		if RUNES_CONFIG['activity_times'][rune] > 0:
+			self.active_runes[rune] = datetime.now()
 		self.change_player_state_on_rune(rune = rune, ch = True)
 
 
@@ -283,6 +284,8 @@ class GameFunctions:
 			self.player.immunity = ch
 		elif rune == REVEAL_RUNE_NAME:
 			self.reveal_grass = ch
+		elif rune == AMMO_RUNE_NAME:
+			self.ammunition = AMMUNITION_SIZE + AMMO_RUNE_BONUS
 
 
 	def update_battle(self):
@@ -315,13 +318,13 @@ class GameFunctions:
 
 
 	def go_on_reload(self):
-		if type(self.ammunition) == type(1):
-			if self.ammunition != AMMUNITION_SIZE:
+		if type(self.ammunition) == int:
+			if self.ammunition < AMMUNITION_SIZE:
 				self.ammunition = datetime.now()
 
 
 	def player_ready_to_shoot(self):
-		if type(self.ammunition) == type(1):
+		if type(self.ammunition) == int:
 			if self.ammunition > 0:
 				return True
 			self.go_on_reload()
