@@ -189,15 +189,6 @@ class Main:
 
 			rm_lst = []
 
-			for obj in gf.grass:
-				for player in gf.players:
-					if gf.players[player] != None:
-						if obj.rect.colliderect(gf.players[player].rect):
-							obj.image = obj.images['transparent']
-							break
-						else:
-							obj.image = obj.images['filled']
-
 			for player in gf.players:
 				if gf.players[player].process_death():
 					rm_lst.append(player)
@@ -213,7 +204,7 @@ class Main:
 	def update_player(self, gf):
 		gf.player.show_nickname = True
 		for obj in gf.grass:
-			if obj.rect.colliderect(gf.player.rect):
+			if obj.rect.colliderect(gf.player.rect) or gf.reveal_grass:
 				obj.image = obj.images['transparent']
 				gf.player.show_nickname = False
 			else:

@@ -43,6 +43,7 @@ class GameFunctions:
 		self.boost_bar = images.get_boost_bar()['bar']
 		self.boost_bar_background = images.get_boost_bar()['background']
 		self.death_timer = None
+		self.reveal_grass = False
 
 
 	def input_map_level(self):
@@ -280,6 +281,8 @@ class GameFunctions:
 			self.player.boost = ch
 		elif rune == IMMUNITY_RUNE_NAME:
 			self.player.immunity = ch
+		elif rune == REVEAL_RUNE_NAME:
+			self.reveal_grass = ch
 
 
 	def update_battle(self):

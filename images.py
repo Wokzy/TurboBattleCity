@@ -114,7 +114,11 @@ def init():
 			"immortality":
 					{
 					"state":pygame.transform.scale(pygame.image.load('sprites/runes/immortality.png'), RUNE_SIZE)
-					}
+					},
+			"reveal":
+					{
+					"state":pygame.transform.scale(pygame.image.load('sprites/runes/reveal.png'), SQUARE_RUNE_SIZE)
+					},
 			}
 
 init()
