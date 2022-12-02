@@ -272,8 +272,7 @@ class Main:
 	def struct_self_info(self, gf, info):
 		for key in info:
 			if key == 'runes':
-				gf.runes = info[key]
-				gf.set_up_runes()
+				gf.set_up_runes(info[key])
 			elif key == 'rune_collected':
 				gf.activate_rune(rune=info[key]) # string
 

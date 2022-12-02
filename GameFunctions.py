@@ -243,7 +243,8 @@ class GameFunctions:
 								BOOST_BAR_SIZE[1] * min(1.0, max(0.1, (datetime.now() - self.player.boost_timer).total_seconds() / BOOST_RECOVERY_DURATION))))
 
 
-	def set_up_runes(self):
+	def set_up_runes(self, runes):
+		self.runes = runes
 		for i in range(len(self.runes)):
 			if 'rect' not in self.runes[i] or 'image' not in self.runes[i]:
 				self.runes[i]['image'] = images.get_runes()[self.runes[i]['rune']]['state']
@@ -255,7 +256,6 @@ class GameFunctions:
 	def update_active_runes(self):
 		for rune in self.active_runes:
 			if self.active_runes[rune] != False and (datetime.now() - self.active_runes[rune]).total_seconds() > RUNES_CONFIG['activity_times'][rune]:
-				self.active_runes[rune] = False
 				self.deactivate_rune(rune)
 
 
@@ -264,6 +264,11 @@ class GameFunctions:
 		self.player_status = 'default'
 		self.player.set_immunity()
 		self.load_ammunition()
+
+		for rune in self.active_runes:
+			if self.active_runes[rune] != False:
+				self.deactivate_rune(rune)
+
 		self.active_runes = {i:False for i in RUNES_CONFIG['runes']}
 
 
@@ -274,6 +279,7 @@ class GameFunctions:
 
 
 	def deactivate_rune(self, rune:str):
+		self.active_runes[rune] = False
 		self.change_player_state_on_rune(rune = rune, ch = False)
 
 
