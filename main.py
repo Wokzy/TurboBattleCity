@@ -12,9 +12,9 @@ import traceback
 import GameFunctions
 
 from constants import *
-from scripts import objects, maps
 from datetime import datetime
 from crash_logging import crash_log
+from scripts import objects, maps, blit
 
 pygame.init()
 pygame.font.init()
@@ -109,7 +109,8 @@ class Main:
 
 	def update(self, gf):
 
-		self.event_handling()
+		if utils.event_handling(gf) == 'quit':
+			self.quit()
 
 		if gf.game_status == 0:
 			res = gf.main_menu_update(socket = self.s, get_information = self.get_information)
@@ -308,51 +309,8 @@ class Main:
 				gf.bullets.remove(bullet)
 
 
-	def blit_grass(self, gf):
-		for obj in gf.grass:
-			self.screen.blit(obj.image, obj.rect)
 
-
-	def blit_map(self, gf, preview=[]):
-		for obj in gf.map_objects:
-			self.screen.blit(obj.image, obj.rect)
-
-
-	def blit_scores(self):
-		for i in range(len(self.scores)):
-			score_lenth_unit = (SCORE_FONT_SIZE)*(len(self.scores)*1.25 - 1)
-			score_coords = (WIDTH // 2 - (score_lenth_unit // 2) - SCORE_FONT_SIZE*.5 + (SCORE_FONT_SIZE + SCORE_FONT_SIZE*0.85)*i, AVERAGE_MULTIPLYER)
-			nick_coords = (score_coords[0]+(SCORE_FONT_SIZE - (NICK_FONT_SIZE*len(self.scores[i][2])))//4, score_coords[1] + SCORE_FONT_SIZE + AVERAGE_MULTIPLYER)
-			self.screen.blit(self.scores[i][0], score_coords)
-			self.screen.blit(self.scores[i][1], nick_coords)
-
-	def blit_additional_images(self, imgs):
-		for key in imgs:
-			if type(imgs[key]) == list:
-				for img in imgs[key]:
-					self.screen.blit(img['image'], img['position'])
-			elif type(imgs[key]) == dict:
-				self.screen.blit(imgs[key]['image'], imgs[key]['position'])
-
-	def blit_other_players(self, gf):
-		for player in gf.players:
-			self.blit_additional_images(gf.players[player].additional_images)
-			self.screen.blit(gf.players[player].image, gf.players[player].rect)
-			self.blit_additional_images(gf.players[player].top_additional_images)
-			if gf.players[player].show_nickname:
-				self.screen.blit(gf.players[player].nickname, (gf.players[player].rect.x, gf.players[player].rect.y - 8*AVERAGE_MULTIPLYER))
-
-
-	def blit_player(self, gf):
-		try:
-			if gf.player != None:
-				self.blit_additional_images(gf.player.additional_images)
-				self.screen.blit(gf.player.image, gf.player.rect)
-				self.blit_additional_images(gf.player.top_additional_images)
-				if gf.player.show_nickname:
-					self.screen.blit(gf.nickname, (gf.player.rect.x, gf.player.rect.y - 8*AVERAGE_MULTIPLYER))
-		except Exception as e:
-			print(e) #pass
+	def blit_interface(self, gf):
 		ammunation = self.ammunition_font.render(gf.ammunition_string, False, (255, 75, 75))
 		boost_bar_position = (1, HEIGHT - gf.boost_bar.get_height())
 		ammunation_position = (BOOST_BAR_SIZE[0] + 2*AVERAGE_MULTIPLYER, HEIGHT - AMMUNITION_FONT_SIZE)
@@ -361,72 +319,26 @@ class Main:
 		self.screen.blit(gf.boost_bar, boost_bar_position)
 
 
-	def blit_bullets(self, gf):
-		for bullet in gf.bullets:
-			self.screen.blit(bullet.image, bullet.rect)
-
-
-	def blit_runes(self, gf):
-		for rune in gf.runes:
-			self.screen.blit(rune['image'], rune['coords'])
-
-
 	def blit_objects(self, gf):
 		self.screen.fill((0, 0, 0))
 		if gf.game_status != 0:
-			self.blit_map(gf)
+			blit.blit_map(screen=self.screen, gf=gf)
 
 			if gf.game_status in [1, 3]:
 				if gf.game_status == 1:
-					self.blit_player(gf)
-				self.blit_other_players(gf)
-				self.blit_bullets(gf)
-				self.blit_runes(gf)
+					blit.blit_player(screen=self.screen, gf=gf)
+					self.blit_interface(gf)
+				blit.blit_other_players(screen=self.screen, gf=gf)
+				blit.blit_bullets(screen=self.screen, gf=gf)
+				blit.blit_runes(screen=self.screen, gf=gf)
 
-			self.blit_grass(gf)
-			#self.blit_text()
+			blit.blit_grass(screen=self.screen, gf=gf)
+			#blit.blit_text()
 
 			if gf.game_status in [1, 3]:
-				self.blit_scores()
+				blit.blit_scores(screen=self.screen, scores=self.scores)
 
-		for obj in gf.additional_objects:
-			self.screen.blit(obj.image, obj.rect)
-
-
-	def event_handling(self):
-		pressed_keys = pygame.key.get_pressed()
-
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				self.quit()
-			elif event.type == pygame.MOUSEBUTTONDOWN:
-				mos_pos = pygame.mouse.get_pos()
-				for obj in gf.additional_objects:
-					if obj.__class__.__name__ == 'Button' and obj.rect.collidepoint(mos_pos):
-						obj.action(gf = gf, main = self)
-						break
-			#elif event.type == pygame.KEYDOWN:
-				#if event.key == pygame.K_t and gf.player != None:
-				#	gf.player.alive = False
-
-		if gf.game_status == 1 and gf.player != None and gf.player.alive:# and self.iterations % MOVEMENT_TICKS == 0:
-			if (pressed_keys[pygame.K_LSHIFT] or pressed_keys[pygame.K_RSHIFT]):
-				gf.player.turn_on_boost()
-
-			if pressed_keys[pygame.K_UP]:
-				gf.player.move(gf.map_objects, 'forward')
-			elif pressed_keys[pygame.K_DOWN]:
-				gf.player.move(gf.map_objects, 'back')
-			elif pressed_keys[pygame.K_RIGHT]:
-				gf.player.move(gf.map_objects, 'right')
-			elif pressed_keys[pygame.K_LEFT]:
-				gf.player.move(gf.map_objects, 'left')
-
-			if pressed_keys[pygame.K_SPACE]:
-				if gf.player_ready_to_shoot():
-					gf.shoot(gf.player)
-			if pressed_keys[pygame.K_r]:
-				gf.go_on_reload()
+		blit.blit_additional_objects(screen=self.screen, gf=gf)
 
 
 	def get_information(self=None, parse=True):
