@@ -25,6 +25,7 @@ class Main:
 		pygame.display.set_caption(GAME_NAME)
 
 		self.init_fonts()
+		utils.init_devices()
 
 		self.clock = pygame.time.Clock()
 		self.iterations = 0 # Game iterations
@@ -291,7 +292,9 @@ class Main:
 
 			if gf.game_status == 1 and gf.player != None and bullet.rect.colliderect(gf.player.rect):
 				if gf.player.alive and not gf.player.immunity:
-					gf.player.alive = False
+					if gf.player.alive != False:
+						gf.player.alive = False
+						utils.player_death()
 					if bullet.shooter.spawn_index != None:
 						self.add_score_to_killer = bullet.shooter.spawn_index
 					else:
