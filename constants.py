@@ -71,3 +71,11 @@ GAME_FONT = 'Terminus.ttf'
 SYS_FONT = 'Ubuntu'
 
 CRASH_LOGGING_DIRECTORY = 'crash_logs'
+
+
+# controllers and additional devices
+CONTROLLER_SHOOT_BUTTON = 1
+CONTROLLER_BOOST_BUTTON = 0
+CONTROLLER_RELOAD_BUTTON = 2
+
+CONTROL_AXIS_INDEX = 0

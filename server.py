@@ -216,8 +216,8 @@ class Server:
 
 	def main(self):
 
+		self.iteration = 1
 		while self.inputs:
-			self.iteration = 1
 			self.readable, self.writable, self.exceptional = select.select(self.inputs, self.outputs, self.inputs)
 
 			for s in self.readable:
@@ -230,7 +230,7 @@ class Server:
 				else:
 					try:
 						data = s.recv(1024)
-					except:
+					except Exception:
 						self.disconnect(s)
 						continue
 
@@ -251,7 +251,8 @@ class Server:
 						self.disconnect(s)
 
 			for s in self.writable:
-				self.outputs.remove(s)
+				if s in self.outputs:
+					self.outputs.remove(s)
 				if self.players_data[s] == 'get_sessions_info':
 					self.remove_player_from_sessions(s)
 					s.send(utils.prepare_object_to_sending(self.get_sessions_info()))

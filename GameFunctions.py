@@ -141,6 +141,7 @@ class GameFunctions:
 			elif res == 'error':
 				print('Unexpected error occured during connection')
 			else:
+				self.session_id = session['session_id']
 				return res
 
 
