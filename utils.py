@@ -39,7 +39,8 @@ def event_handling(gf):
 		if controller:
 			if controller.get_numaxes() != 0:
 				control_axes = (round(controller.get_axis(CONTROL_AXIS_INDEX*2)), -round(controller.get_axis(CONTROL_AXIS_INDEX*2+1)))
-			control_hat = controller.get_hat(0)
+			if 'PS4' not in controller.get_name():
+				control_hat = controller.get_hat(0)
 			control_buttons_pressed = [c for c in range(0, controller.get_numbuttons()) if controller.get_button(c) != False]
 
 		if (pressed_keys[pygame.K_LSHIFT] or pressed_keys[pygame.K_RSHIFT]) or CONTROLLER_BOOST_BUTTON in control_buttons_pressed:
