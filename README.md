@@ -11,6 +11,12 @@ Battle City PC impl
 ### Xbox 360 Controller
 ---
 - `left axis` or `hat` - movement
-- `B` - shoot
-- `A` - boost
+- `A` - shoot
+- `B` - boost
 - `X` - reload
+### Sony Dualshock 4
+---
+- `left axis` - movement
+- `x` - Shoot
+- `circle` - boost
+- `square` - reload
