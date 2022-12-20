@@ -1,5 +1,5 @@
 import pygame
-import engine as engine_lib
+from engine import engine as engine_lib
 import GameFunctions
 
 from constants import *
@@ -32,6 +32,8 @@ def player():
 			engine.quit()
 			break
 
-		clock.tick(FPS)
+		#print(engine.network_handler.player_data)
+
+		clock.tick(FPS) #FPS
 
 player()

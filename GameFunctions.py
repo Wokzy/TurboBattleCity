@@ -35,7 +35,6 @@ class GameFunctions:
 		self.players = {}
 		self.bullets = []
 		self.runes = []
-		self.active_runes = {i:False for i in RUNES_CONFIG['runes']}
 		self.added_bullets = []
 		self.grass = []
 		self.ammunition = AMMUNITION_SIZE
@@ -65,7 +64,7 @@ class GameFunctions:
 				while True:
 					print(f'Your nickname is: {self.nickname_string}\n')
 					options = '1 - show sessions\n' + '2 - create session\n' + '3 - connect to session\n' + '4 - change nickname\n' + \
-								'5 - map preview\n' + '6 - observe game\n' + '0 - leave\n'
+								'5 - map preview\n' + '0 - leave\n' # '6 - observe game\n'
 					ch = input(options)
 
 					socket.send('get_sessions_info'.encode(ENCODING))
@@ -83,8 +82,8 @@ class GameFunctions:
 					elif ch == '5':
 						self.map_preview()
 						return 'map_preview'
-					elif ch == '6':
-						return self.observe_session(socket, sessions_info, get_information)
+					#elif ch == '6':
+					#	return self.observe_session(socket, sessions_info, get_information)
 					elif ch == '0':
 						return 'leave'
 
@@ -233,9 +232,9 @@ class GameFunctions:
 			self.ammunition_string = str(self.ammunition)
 
 		if self.player.boost:
-			if self.active_runes[BOOST_RUNE_NAME] != False:
+			if self.player.active_runes[BOOST_RUNE_NAME] != False:
 				self.boost_bar = pygame.transform.scale(self.boost_bar, (BOOST_BAR_SIZE[0], 
-								BOOST_BAR_SIZE[1] * max(0.1, (RUNES_CONFIG['activity_times'][BOOST_RUNE_NAME] - (datetime.now() - self.active_runes[BOOST_RUNE_NAME]).total_seconds()) / RUNES_CONFIG['activity_times'][BOOST_RUNE_NAME])))
+								BOOST_BAR_SIZE[1] * max(0.1, (RUNES_CONFIG['activity_times'][BOOST_RUNE_NAME] - (datetime.now() - self.player.active_runes[BOOST_RUNE_NAME]).total_seconds()) / RUNES_CONFIG['activity_times'][BOOST_RUNE_NAME])))
 			else:
 				self.boost_bar = pygame.transform.scale(self.boost_bar, (BOOST_BAR_SIZE[0], 
 								BOOST_BAR_SIZE[1] * max(0.1, (BOOST_DURATION - (datetime.now() - self.player.boost_timer).total_seconds()) / BOOST_DURATION)))
@@ -255,8 +254,8 @@ class GameFunctions:
 
 
 	def update_active_runes(self):
-		for rune in self.active_runes:
-			if self.active_runes[rune] != False and (datetime.now() - self.active_runes[rune]).total_seconds() > RUNES_CONFIG['activity_times'][rune]:
+		for rune in self.player.active_runes:
+			if self.player.active_runes[rune] != False and (datetime.now() - self.player.active_runes[rune]).total_seconds() > RUNES_CONFIG['activity_times'][rune]:
 				self.deactivate_rune(rune)
 
 
@@ -266,21 +265,21 @@ class GameFunctions:
 		self.player.set_immunity()
 		self.load_ammunition()
 
-		for rune in self.active_runes:
-			if self.active_runes[rune] != False:
+		for rune in self.player.active_runes:
+			if self.player.active_runes[rune] != False:
 				self.deactivate_rune(rune)
 
-		self.active_runes = {i:False for i in RUNES_CONFIG['runes']}
+		self.player.active_runes = {i:False for i in RUNES_CONFIG['runes']}
 
 
 	def activate_rune(self, rune:str):
 		if RUNES_CONFIG['activity_times'][rune] > 0:
-			self.active_runes[rune] = datetime.now()
+			self.player.active_runes[rune] = datetime.now()
 		self.change_player_state_on_rune(rune = rune, ch = True)
 
 
 	def deactivate_rune(self, rune:str):
-		self.active_runes[rune] = False
+		self.player.active_runes[rune] = False
 		self.change_player_state_on_rune(rune = rune, ch = False)
 
 
@@ -297,7 +296,7 @@ class GameFunctions:
 
 	def update_battle(self):
 		self.player.shoot_iteration += 1
-		self.player.general_update(self.active_runes)
+		self.player.general_update(self.player.active_runes)
 
 		self.update_active_runes()
 

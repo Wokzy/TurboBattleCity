@@ -25,8 +25,8 @@ class NetworkHandler(): # run = NetworkHandler.start()
 	def __init__(self):
 		#threading.Thread.__init__(self, daemon=True)
 		self.server = (SERVER_IP, SERVER_PORT)
-		self.data_to_send = None
-		self.recieved_data = []
+		self.data_to_send = {}
+		self.recieved_data = {}
 		self.session_id = None
 		self.player_data = None
 		self.other_players_data = None
@@ -40,9 +40,11 @@ class NetworkHandler(): # run = NetworkHandler.start()
 
 
 	def update(self):
-		if self.data_to_send != None:
-			self.send_information(self.data_to_send)
-			self.data_to_send = None
+		if self.data_to_send != {}:
+			for key in self.data_to_send:
+				self.send_information(self.data_to_send[key])
+				self.recieved_data[key] = self.get_information()
+				del self.data_to_send[key]
 		if self.player_data and self.session_id:
 			self.send_player_data()
 			self.other_players_data = self.get_information()
@@ -101,6 +103,10 @@ class NetworkHandler(): # run = NetworkHandler.start()
 			self.socket.shutdown(socket.SHUT_RDWR)
 			self.socket.close()
 
+	def send(self, key, data):
+		self.data_to_send[key] = data
+		self.recieved_data[key] = None
+
 
 
 
@@ -108,8 +114,12 @@ class NetworkHandler(): # run = NetworkHandler.start()
 class Engine:
 	def __init__(self, gf, settings_set):
 
+		self.settings = settings_set
+
 		self.network = settings_set['network']
 		self.player = settings_set['player']
+		self.screen_usage = bool(settings_set['screen'])
+
 		if self.network:
 			self.network_handler = settings_set['network_handler']
 
@@ -129,12 +139,11 @@ class Engine:
 
 			self.screen = pygame.display.set_mode(tuple(resolution))
 			pygame.display.set_caption(settings_set['screen']['caption'])
-
-			self.init_fonts()
 		else:
-			self.screen = pygame.display.set_mode((75, 75))
+			self.screen = pygame.display.set_mode((215, 215))
 			pygame.display.set_caption('physics processing display')
 
+		self.init_fonts()
 		self.clock = pygame.time.Clock()
 		self.iterations = 0 # Game iterations
 
@@ -191,7 +200,10 @@ class Engine:
 	def game_loop(self, gf):
 		self.update(gf)
 
-		self.blit_objects(gf)
+		if self.screen_usage:
+			self.blit_objects(gf)
+		else:
+			self.screen.fill((0, 0, 0))
 
 		self.iterations += 1
 		pygame.display.update()
@@ -215,25 +227,26 @@ class Engine:
 				self.start_battle(gf, res)
 				self.network_handler.session_id = gf.session_id
 
-		if gf.game_status == 1:
-			if gf.player == None:
-				death_time = (datetime.now() - gf.death_timer).total_seconds()
-				if death_time >= DEATH_DURATION:
-					gf.respawn_player(position=self.positions[self.spawn_index], rotation=self.rotations[self.spawn_index])
+		if gf.game_status != 0:
+			if gf.game_status == 1:
+				if gf.player == None and self.player:
+					death_time = (datetime.now() - gf.death_timer).total_seconds()
+					if death_time >= DEATH_DURATION:
+						gf.respawn_player(position=self.positions[self.spawn_index], rotation=self.rotations[self.spawn_index])
+					else:
+						gf.ammunition_string = '{:.1f}'.format(DEATH_DURATION - death_time)
 				else:
-					gf.ammunition_string = '{:.1f}'.format(DEATH_DURATION - death_time)
-			else:
-				gf.update_battle()
-				if self.player:
-					self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
-										"nickname":gf.nickname_string, "spawn_index":self.spawn_index, 'alive':int(gf.player.alive),
-										'statuses':{"boost":int(gf.player.boost), "immunity":int(gf.player.immunity)}}
-					self.update_player(gf)
+					if self.player:
+						gf.update_battle()
+						self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
+											"nickname":gf.nickname_string, "spawn_index":self.spawn_index, 'alive':int(gf.player.alive),
+											'statuses':{"boost":int(gf.player.boost), "immunity":int(gf.player.immunity)}}
+						self.update_player(gf)
 
 
 			if self.iterations % FPS*5 == 0:
 				gf.players = {}
-			if self.player:
+			if self.player and gf.game_status == 1:
 				if self.add_score_to_killer != None:
 					self.player_data['killer'] = self.add_score_to_killer
 					self.add_score_to_killer = None
@@ -241,8 +254,12 @@ class Engine:
 					gf.player.shouted = False
 				self.network_handler.player_data = self.player_data
 
+			if gf.game_status == 3:
+				self.network_handler.send(key='other_players_data', data = {'session_id':self.network_handler.session_id, 'observing':1})
+				self.network_handler.other_players_data = self.network_handler.recieved_data['other_players_data']
+
 			self.struct_players_info(gf, self.network_handler.other_players_data)
-			if self.player:
+			if self.player and gf.game_status == 1 and self.screen_usage:
 				self.scores.insert(0, (self.score_font.render(f'{gf.score}', False, (255, 255, 255)), self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255)), gf.nickname_string))
 
 
@@ -263,32 +280,6 @@ class Engine:
 
 			for obj in rm_lst:
 				del gf.players[obj]
-		elif gf.game_status == 2:
-			pass
-		elif gf.game_status == 3:
-
-			self.update_bullets(gf)
-
-			if self.it_is_time_to_update_server():
-				info = {'session_id':self.session_id, 'observing':1}
-				self.send_information(info)
-				players_info = self.get_information()
-				if self.message_has_an_error(players_info):
-					print('Session does not exist yet or anymore')
-					self.exit_map(gf)
-					return
-				self.struct_players_info(gf, players_info)
-				self.reset_server_update_timer()
-
-			rm_lst = []
-
-			for player in gf.players:
-				if gf.players[player].process_death():
-					rm_lst.append(player)
-
-			for obj in rm_lst:
-				del gf.players[obj]
-
 
 		if self.iterations >= 3628800: # 3628800 = !10
 			self.iterations = 0
@@ -322,14 +313,15 @@ class Engine:
 	def struct_players_info(self, gf, players_info):
 		self.scores = []
 
-		if type(players_info) != dict:
+		if type(players_info) not in [dict, list]:
 			return
 
 		try:
-			if self.player:
+			if self.player and gf.player != None:
 				self.struct_self_info(gf, players_info['player_info'])
 
-			players_info = players_info['other_players']
+			if type(players_info) == dict:
+				players_info = players_info['other_players']
 
 			for player in players_info:
 				if type(player) == type(0):
@@ -348,7 +340,9 @@ class Engine:
 				boost = player['statuses']['boost']
 				immunity = player['statuses']['immunity']
 
-				self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
+
+				if self.screen_usage:
+					self.scores.append((self.score_font.render(score, False, self.score_font_colors[players_info.index(player)]), 
 									self.info_font.render(nickname, False, (255, 255, 255)), nickname))
 
 				if addr in gf.players:
@@ -396,7 +390,13 @@ class Engine:
 
 			for player in gf.players:
 				if bullet.rect.colliderect(gf.players[player].rect):
-					#gf.players[player].alive = False
+					if not self.network:
+						gf.players[player].alive = False
+					if bullet.shooter != None:
+						if bullet.shooter != gf.player and bullet.shooter in gf.players:
+							gf.players[gf.players.index(bullet.shooter)].killed_someone = True
+						elif gf.player != None:
+							gf.player.killed_someone = True
 					rm_lst.append(bullet)
 					break
 

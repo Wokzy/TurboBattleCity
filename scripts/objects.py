@@ -82,6 +82,9 @@ class Tank:
 
 		self.show_nickname = True
 
+		self.active_runes = {i:False for i in RUNES_CONFIG['runes']}
+		self.killed_someone = False
+
 	def move(self, map_objects, rotation):
 		self.image = self.images[rotation]
 		self.rotation = rotation
@@ -137,6 +140,7 @@ class Tank:
 
 
 	def general_update(self, runes=None):
+		self.killed_someone = False
 		if self.boost:
 			#if 'boost' not in self.additional_images:
 			#	self.turn_on_boost(force = True)
@@ -171,6 +175,7 @@ class Tank:
 		self.score = score
 		self.alive = alive
 		self.immunity = immunity
+		self.killed_someone = False
 
 		if self.boost != Ellipsis:
 			if not self.boost and boost:
