@@ -45,7 +45,7 @@ class MapObject:
 
 
 class Tank:
-	def __init__(self, player, position, rotation='forward', shoot_speed=TANK_SHOOT_SPEED, spawn_index=None):
+	def __init__(self, player, position, rotation='forward', shoot_speed=TANK_SHOOT_SPEED, spawn_index=None, ID=None):
 		self.player = player
 
 		if player == True:
@@ -63,9 +63,12 @@ class Tank:
 		self.rect.x = position[0]
 		self.rect.y = position[1]
 
+		self.defaults = {'player':player, 'position':position, 'rotation':rotation, 'shoot_speed':shoot_speed, 'spawn_index':spawn_index}
+
 		self.shoot_speed = shoot_speed
 		self.shoot_iteration = shoot_speed
 		self.shouted = False
+		self.status = 'default'
 
 		self.speed = TANK_SPEED
 		self.spawn_index = spawn_index
@@ -84,6 +87,8 @@ class Tank:
 
 		self.active_runes = {i:False for i in RUNES_CONFIG['runes']}
 		self.killed_someone = False
+
+		self.id = ID
 
 	def move(self, map_objects, rotation):
 		self.image = self.images[rotation]
@@ -234,6 +239,21 @@ class Tank:
 	def set_immunity(self):
 		self.immunity_timer = datetime.now()
 		self.immunity = True
+
+
+	def respawn(self):
+		self.__init__(player=self.player, position=self.defaults['position'], rotation=self.defaults['rotation'],
+						shoot_speed = self.defaults['shoot_speed'], spawn_index=self.spawn_index, ID=self.id)
+
+		'''
+		self.alive = True
+		self.shouted = False
+		self.status = 'default'
+		self.rotation = self.defaults['rotation']
+		self.image = self.images[self.rotation]
+		self.rect.x = self.defaults['position'][0]
+		self.rect.y = self.defaults['position'][1]
+		'''
 
 
 

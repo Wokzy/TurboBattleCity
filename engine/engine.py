@@ -1,15 +1,12 @@
 import os
 import sys
-import ssl
 import time
 import json
 import utils
-import socket
 import pygame
 import images
 import platform
 import traceback
-import threading
 import GameFunctions
 
 from constants import *
@@ -21,96 +18,6 @@ pygame.init()
 pygame.font.init()
 
 
-class NetworkHandler(): # run = NetworkHandler.start()
-	def __init__(self):
-		#threading.Thread.__init__(self, daemon=True)
-		self.server = (SERVER_IP, SERVER_PORT)
-		self.data_to_send = {}
-		self.recieved_data = {}
-		self.session_id = None
-		self.player_data = None
-		self.other_players_data = None
-
-		self.server_update_time = 1 / TICK_RATE
-
-	def run(self):
-		while True:
-			self.update()
-			time.sleep(self.server_update_time)
-
-
-	def update(self):
-		if self.data_to_send != {}:
-			for key in self.data_to_send:
-				self.send_information(self.data_to_send[key])
-				self.recieved_data[key] = self.get_information()
-				del self.data_to_send[key]
-		if self.player_data and self.session_id:
-			self.send_player_data()
-			self.other_players_data = self.get_information()
-
-
-	def stable_connection(self):
-		self.connect()
-		return self.do_handshake()
-
-	def connect(self):
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-		context = ssl.SSLContext(ssl.PROTOCOL_TLS)
-		context.verify_mode = ssl.CERT_REQUIRED
-		context.load_verify_locations(cafile='tbc_cert.pem', capath=None, cadata=None)
-
-		self.socket = context.wrap_socket(self.socket)
-
-		#self.socket = ssl.wrap_socket(self.socket, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
-		self.socket.connect(self.server)
-		print('Cipher used:', self.socket.cipher())
-
-	def do_handshake(self):
-		self.socket.send(ntwu.prepare_object_to_sending('confirmation_request'))
-		command = self.get_information(parse=False)
-		exec(command)
-		self.socket.send(ntwu.prepare_object_to_sending(f'confirmation_response {self.confirmation_result}'))
-		if self.get_information(parse=False) == 'success':
-			return True, 'Files confimation successfull'
-		else:
-			self.disconnect()
-			return False, 'Files confimation failed; check wether game is up to date; press enter to quit'
-
-	'''
-	def connect_to_session(self, sessions_info, reason='playing'):
-		self.socket.send(utils.prepare_object_to_sending(sessions_info))
-		return self.get_information()
-	'''
-
-	def get_information(self=None, parse=True):
-		info = self.socket.recv(1024).decode(ENCODING)
-		if parse and ('[' in info or '{' in info):
-			return json.loads(info)
-		return info
-
-	def send_information(self, info):
-		self.socket.send(ntwu.prepare_object_to_sending(info))
-
-	def send_player_data(self):
-		info = {'session_id':self.session_id, 'player_data':self.player_data}
-		self.send_information(info)
-
-	def disconnect(self):
-		if self.socket.fileno() != -1:
-			self.socket.shutdown(socket.SHUT_RDWR)
-			self.socket.close()
-
-	def send(self, key, data):
-		self.data_to_send[key] = data
-		self.recieved_data[key] = None
-
-
-
-
-
 class Engine:
 	def __init__(self, gf, settings_set):
 
@@ -120,6 +27,14 @@ class Engine:
 		self.player = settings_set['player']
 		self.screen_usage = bool(settings_set['screen'])
 
+		#self.positions = [(0, 0), (0, 0)]
+		self.rotations = ['forward']*10
+		self.init_fonts()
+		self.clock = pygame.time.Clock()
+		self.iterations = 0 # Game iterations
+
+		self.server_update_timer = datetime.now()
+
 		if self.network:
 			self.network_handler = settings_set['network_handler']
 
@@ -128,7 +43,13 @@ class Engine:
 			print(connneciton_result[1])
 			if not connneciton_result[0]:
 				self.quit()
-			#self.network_handler.start()
+			self.network_handler.start()
+			self.player_id = None
+		else:
+			self.localgame = settings_set['localgame']
+			self.player_id = utils.gen_random_shake(length=6)
+
+			self.start_battle(gf, battle_settings={'level':settings_set['level'], 'spawn_index':self.localgame.add_player(player_id=self.player_id)})
 
 		if settings_set['screen']:
 			resolution = [WIDTH, HEIGHT]
@@ -143,13 +64,6 @@ class Engine:
 			self.screen = pygame.display.set_mode((215, 215))
 			pygame.display.set_caption('physics processing display')
 
-		self.init_fonts()
-		self.clock = pygame.time.Clock()
-		self.iterations = 0 # Game iterations
-
-		#self.positions = [(0, 0), (0, 0)]
-		self.rotations = ['forward']*10
-		self.server_update_timer = datetime.now()
 
 	def init_fonts(self):
 		if platform.system() == 'Linux':
@@ -177,13 +91,11 @@ class Engine:
 		if self.network:
 			self.session_id = battle_settings['session_id']
 
-			self.spawn_index = battle_settings['spawn_index']
 		if self.player:
-			gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index])
+			self.spawn_index = battle_settings['spawn_index']
+			gf.player = objects.Tank(True, self.positions[self.spawn_index], self.rotations[self.spawn_index], ID=self.player_id)
 			#print(gf.nickname_string)
 			gf.nickname = self.nickname_font.render(gf.nickname_string, False, (255, 255, 255))
-
-		#self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status}
 
 
 	def start_observing(self, gf, connection_info):
@@ -232,33 +144,45 @@ class Engine:
 				if gf.player == None and self.player:
 					death_time = (datetime.now() - gf.death_timer).total_seconds()
 					if death_time >= DEATH_DURATION:
-						gf.respawn_player(position=self.positions[self.spawn_index], rotation=self.rotations[self.spawn_index])
+						gf.respawn_player(position=self.positions[self.spawn_index], rotation=self.rotations[self.spawn_index], ID=self.player_id)
 					else:
 						gf.ammunition_string = '{:.1f}'.format(DEATH_DURATION - death_time)
 				else:
 					if self.player:
 						gf.update_battle()
-						self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
+						self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation,
+											"status":gf.player.status, "shouted":int(gf.player.shouted),
 											"nickname":gf.nickname_string, "spawn_index":self.spawn_index, 'alive':int(gf.player.alive),
 											'statuses':{"boost":int(gf.player.boost), "immunity":int(gf.player.immunity)}}
 						self.update_player(gf)
+						if not self.network:
+							self.localgame.update_players(gf, players={player:gf.players[player] for player in gf.players if gf.players[player].id != self.player_id})
 
 
-			if self.iterations % FPS*5 == 0:
+			if self.iterations % FPS*5 == 0 and self.network:
 				gf.players = {}
+
 			if self.player and gf.game_status == 1:
 				if self.add_score_to_killer != None:
 					self.player_data['killer'] = self.add_score_to_killer
 					self.add_score_to_killer = None
 				if gf.player != None:
 					gf.player.shouted = False
-				self.network_handler.player_data = self.player_data
+
+				if self.network:
+					self.network_handler.player_data = self.player_data
+				else:
+					self.localgame.players[self.player_id] = self.player_data
 
 			if gf.game_status == 3:
 				self.network_handler.send(key='other_players_data', data = {'session_id':self.network_handler.session_id, 'observing':1})
 				self.network_handler.other_players_data = self.network_handler.recieved_data['other_players_data']
 
-			self.struct_players_info(gf, self.network_handler.other_players_data)
+			if self.network:
+				self.struct_players_info(gf, self.network_handler.other_players_data)
+			else:
+				self.struct_players_info(gf, [self.localgame.players[player] for player in self.localgame.players if player != self.player_id])
+
 			if self.player and gf.game_status == 1 and self.screen_usage:
 				self.scores.insert(0, (self.score_font.render(f'{gf.score}', False, (255, 255, 255)), self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255)), gf.nickname_string))
 
@@ -276,7 +200,10 @@ class Engine:
 							break
 
 					if gf.players[player].process_death():
-						rm_lst.append(player)
+						if self.network:
+							rm_lst.append(player)
+						else:
+							gf.players[player].respawn()
 
 			for obj in rm_lst:
 				del gf.players[obj]
@@ -286,6 +213,12 @@ class Engine:
 
 
 	def update_player(self, gf):
+		if not self.network:
+			self.player_data['address'] = self.player_id
+			self.player_data['score'] = self.localgame.scores[self.player_id]
+			gf.score = self.player_data['score']
+			self.player_data['id'] = self.player_id
+
 		gf.player.show_nickname = True
 		for obj in gf.grass:
 			if obj.rect.colliderect(gf.player.rect) or gf.reveal_grass:
@@ -299,8 +232,11 @@ class Engine:
 				self.player_data['rune_collected'] = rune['id']
 
 		if gf.player.process_death():
-			gf.player = None
-			gf.death_timer = datetime.now()
+			if self.network:
+				gf.player = None
+				gf.death_timer = datetime.now()
+			else:
+				gf.player.respawn()
 
 	def message_has_an_error(self, message):
 		return '_error' in message
@@ -317,10 +253,10 @@ class Engine:
 			return
 
 		try:
-			if self.player and gf.player != None:
-				self.struct_self_info(gf, players_info['player_info'])
 
 			if type(players_info) == dict:
+				if self.player and gf.player != None:
+					self.struct_self_info(gf, players_info['player_info'])
 				players_info = players_info['other_players']
 
 			for player in players_info:
@@ -348,7 +284,9 @@ class Engine:
 				if addr in gf.players:
 					gf.players[addr].update(x, y, rot, score, alive=bool(alive), boost=bool(boost), immunity=bool(immunity))
 				elif alive:
-					gf.players[addr] = objects.Tank(False, (x, y), rot, shoot_speed=TANK_SHOOT_SPEED//2, spawn_index=spawn_index)
+					if self.network:
+						player['id'] = None
+					gf.players[addr] = objects.Tank(False, (x, y), rot, shoot_speed=TANK_SHOOT_SPEED//2, spawn_index=spawn_index, ID=player['id'])
 					gf.players[addr].nickname = self.nickname_font.render(nickname, False, (255, 255, 255))
 					gf.players[addr].show_nickname = True
 
@@ -393,8 +331,10 @@ class Engine:
 					if not self.network:
 						gf.players[player].alive = False
 					if bullet.shooter != None:
-						if bullet.shooter != gf.player and bullet.shooter in gf.players:
-							gf.players[gf.players.index(bullet.shooter)].killed_someone = True
+						if bullet.shooter == gf.player or bullet.shooter in gf.players:
+							bullet.shooter.killed_someone = True
+							if not self.network:
+								self.localgame.scores[bullet.shooter.id] += 1
 						elif gf.player != None:
 							gf.player.killed_someone = True
 					rm_lst.append(bullet)
@@ -441,7 +381,8 @@ class Engine:
 			gf.stop_battle()
 
 	def quit(self):
-		self.network_handler.disconnect()
+		if self.network:
+			self.network_handler.disconnect()
 		pygame.quit()
 		sys.exit()
 

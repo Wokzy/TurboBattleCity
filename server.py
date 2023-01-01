@@ -5,11 +5,10 @@ import utils
 import random
 import socket
 import select
-import hashlib
 import sha256_hashsummer
 
 from datetime import datetime
-from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG
+from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG, ID_HASH_SIZE
 
 
 class Server:
@@ -79,7 +78,7 @@ class Server:
 	def create_session(self, data):
 		session = json.loads(data.split('create_session')[1]) # "create_session{'session_id', 'bla', ...}"
 		session['players_data'] = {}
-		session['runes'] = {'runes':{hashlib.shake_128(str(random.randint(1, 10**21)).encode()).hexdigest(6):{'is_placed':False, 'coords':i} for i in session['runes']}, 'timer':datetime.now()} # is_palace takes rune type, wether rune is placed
+		session['runes'] = {'runes':{utils.gen_random_shake(ID_HASH_SIZE):{'is_placed':False, 'coords':i} for i in session['runes']}, 'timer':datetime.now()} # is_palace takes rune type, wether rune is placed
 		session['creation_time'] = datetime.now()
 		session['spawns'] = [True] * session['max_players']
 		session['scores'] = {}

@@ -16,7 +16,6 @@ class GameFunctions:
 		self.nickname_string = NICKNAME
 		self.nickname = NICKNAME
 		self.player = None
-		self.player_status = 'default'
 		self.score = 0
 
 		self.level = level
@@ -259,9 +258,8 @@ class GameFunctions:
 				self.deactivate_rune(rune)
 
 
-	def respawn_player(self, position, rotation):
-		self.player = objects.Tank(True, position, rotation)
-		self.player_status = 'default'
+	def respawn_player(self, position, rotation, ID):
+		self.player = objects.Tank(True, position, rotation, ID=ID)
 		self.player.set_immunity()
 		self.load_ammunition()
 
