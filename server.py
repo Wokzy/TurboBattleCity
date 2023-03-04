@@ -18,7 +18,8 @@ class Server:
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 		context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-		context.load_cert_chain('tbc_cert.pem', 'tbc_key.pem')
+		# context.load_cert_chain('tbc_cert.pem', 'tbc_key.pem')
+		context.load_cert_chain('certificate.pem')
 
 		self.sock = context.wrap_socket(self.sock, server_side=True)
 		#self.sock = ssl.wrap_socket(self.sock, server_side=True, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
@@ -225,8 +226,10 @@ class Server:
 
 					#if len(self.players_data) >= 4:
 					#	continue
-
-					self.accept_connection(s)
+					try:
+						self.accept_connection(s)
+					except:
+						continue
 				else:
 					try:
 						data = s.recv(1024)

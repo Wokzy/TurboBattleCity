@@ -58,6 +58,7 @@ class Main:
 		self.server_update_time = 1 / TICK_RATE
 		self.server_update_timer = datetime.now()
 
+
 	def init_fonts(self):
 		if platform.system() == 'Linux':
 			self.info_font = pygame.font.SysFont(SYS_FONT, INFO_FONT_SIZE)
@@ -70,6 +71,7 @@ class Main:
 			self.score_font = pygame.font.Font(GAME_FONT, SCORE_FONT_SIZE)
 			self.ammunition_font = pygame.font.Font(GAME_FONT, AMMUNITION_FONT_SIZE)
 		self.score_font_colors = [(180, 25, 25), (25, 180, 25), (25, 25, 180),]*3
+
 
 	def start_battle(self, gf, connection_info):
 
@@ -362,8 +364,9 @@ class Main:
 		self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 		context = ssl.SSLContext(ssl.PROTOCOL_TLS)
-		context.verify_mode = ssl.CERT_REQUIRED
-		context.load_verify_locations(cafile='tbc_cert.pem', capath=None, cadata=None)
+		#context.verify_mode = ssl.CERT_REQUIRED
+		#context.load_verify_locations(cafile='tbc_cert.pem', capath=None, cadata=None)
+		context.load_verify_locations(cadata=ssl.get_server_certificate(self.server))
 
 		self.s = context.wrap_socket(self.s)
 
