@@ -7,6 +7,7 @@ import hashlib
 from constants import *
 from scripts import objects, maps
 from datetime import datetime, timedelta
+from network import prepare_object_to_sending
 
 
 class GameFunctions:
@@ -115,7 +116,7 @@ class GameFunctions:
 			except Exception as e:
 				print(e)
 		session['session_id'] = hashlib.md5(str(random.randint(1, 10**29)).encode()).hexdigest()
-		socket.send(utils.prepare_object_to_sending('create_session' + str(session)))
+		socket.send(prepare_object_to_sending('create_session' + str(session)))
 
 
 	def connect_to_session(self, socket, sessions_info, get_information, reason='playing'):
@@ -133,7 +134,7 @@ class GameFunctions:
 			session['connect_to_session'] = "1"
 			session['reason'] = reason
 
-			socket.send(utils.prepare_object_to_sending(session))
+			socket.send(prepare_object_to_sending(session))
 			res = get_information()
 
 			if res == 'overflowed':

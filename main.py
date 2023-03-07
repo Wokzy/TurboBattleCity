@@ -15,11 +15,12 @@ from constants import *
 from datetime import datetime
 from crash_logging import crash_log
 from scripts import objects, maps, blit
+from network import Client, prepare_object_to_sending
 
 pygame.init()
 pygame.font.init()
 
-class Main:
+class Main(Client):
 	def __init__(self, gf):
 		self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
 		pygame.display.set_caption(GAME_NAME)
@@ -34,21 +35,8 @@ class Main:
 		self.rotations = ['forward']*10
 
 
-		self.server = (SERVER_IP, SERVER_PORT) # from constants
-		self.connect()
-
-		while True:
-			self.s.send(utils.prepare_object_to_sending('confirmation_request'))
-			command = self.get_information(parse=False)
-			exec(command)
-			self.s.send(utils.prepare_object_to_sending(f'confirmation_response {self.confirmation_result}'))
-			if self.get_information(parse=False) == 'success':
-				print('Files confimation successfull')
-				break
-			else:
-				self.disconnect()
-				input('Files confimation failed; check wether game is up to date; press enter to quit')
-				self.quit()
+		#self.server = (SERVER_IP, SERVER_PORT) # from constants
+		super().__init__()
 
 
 		#sessions_info = self.get_information().split(' ')
@@ -96,6 +84,10 @@ class Main:
 		self.session_id = connection_info['session_id']
 
 
+	def it_is_time_to_update_server(self):
+		return (datetime.now() - self.server_update_timer).total_seconds() >= self.server_update_time
+
+
 	def main(self, gf):
 		self.screen.fill((0, 0, 0))
 		while True:
@@ -116,7 +108,7 @@ class Main:
 			self.quit()
 
 		if gf.game_status == 0:
-			res = gf.main_menu_update(socket = self.s, get_information = self.get_information)
+			res = gf.main_menu_update(socket = self.socket, get_information = self.get_information)
 
 			if res == 'leave':
 				self.quit()
@@ -222,12 +214,9 @@ class Main:
 			gf.player = None
 			gf.death_timer = datetime.now()
 
+
 	def message_has_an_error(self, message):
 		return '_error' in message
-
-
-	def it_is_time_to_update_server(self):
-		return (datetime.now() - self.server_update_timer).total_seconds() >= self.server_update_time
 
 
 	def reset_server_update_timer(self):
@@ -346,42 +335,10 @@ class Main:
 		blit.blit_additional_objects(screen=self.screen, gf=gf)
 
 
-	def get_information(self=None, parse=True):
-		info = self.s.recv(1024).decode(ENCODING)
-		if parse and ('[' in info or '{' in info):
-			return json.loads(info)
-		return info
-
-	def send_information(self, info):
-		self.s.send(utils.prepare_object_to_sending(info))
-
-	def send_player_data(self):
-		info = {'session_id':self.session_id, 'player_data':self.player_data}
-		self.send_information(info)
-
-	def connect(self):
-		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-		context = ssl.SSLContext(ssl.PROTOCOL_TLS)
-		#context.verify_mode = ssl.CERT_REQUIRED
-		#context.load_verify_locations(cafile='tbc_cert.pem', capath=None, cadata=None)
-		context.load_verify_locations(cadata=ssl.get_server_certificate(self.server))
-
-		self.s = context.wrap_socket(self.s)
-
-		#self.s = ssl.wrap_socket(self.s, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
-		self.s.connect(self.server)
-		print('Cipher used:', self.s.cipher())
-
-	def disconnect(self):
-		if self.s.fileno() != -1:
-			self.s.shutdown(socket.SHUT_RDWR)
-			self.s.close()
-
 	def exit_map(self, gf):
 		if gf.game_status in [1, 2, 3]:
 			gf.stop_battle()
+
 
 	def quit(self):
 		self.disconnect()
