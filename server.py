@@ -153,6 +153,10 @@ class Server:
 		return data
 
 
+	def get_availible_runes(self, session_id):
+		return [{'rune':self.sessions[session_id]['runes']['runes'][i]['is_placed'], 'coords':self.sessions[session_id]['runes']['runes'][i]['coords'], 'id':i} for i in self.sessions[session_id]['runes']['runes'] if self.sessions[session_id]['runes']['runes'][i]['is_placed'] != False]
+
+
 	def process_players_data(self, s):
 		player_info = {}
 		self.players_data[s] = json.loads(self.players_data[s])
@@ -167,7 +171,7 @@ class Server:
 				player_info['rune_collected'] = self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed']
 				self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed'] = False
 
-		player_info['runes'] = [{'rune':self.sessions[session_id]['runes']['runes'][i]['is_placed'], 'coords':self.sessions[session_id]['runes']['runes'][i]['coords'], 'id':i} for i in self.sessions[session_id]['runes']['runes'] if self.sessions[session_id]['runes']['runes'][i]['is_placed'] != False]
+		player_info['runes'] = self.get_availible_runes(session_id)
 
 		self.sessions[session_id]['players_data'][s] = self.players_data[s]['player_data']
 		self.sessions[session_id]['players_data'][s]['address'] = f"{s.getpeername()[0]}:{s.getpeername()[1]}" # ip:port
@@ -181,7 +185,7 @@ class Server:
 	def process_observing(self, s):
 		self.players_data[s] = json.loads(self.players_data[s])
 		if self.players_data[s]['session_id'] in self.sessions:
-			self.send_data(s, prepare_object_to_sending(self.collect_other_players_data(s)))
+			self.send_data(s, prepare_object_to_sending({'other_players':self.collect_other_players_data(s), 'player_info':{'runes':self.get_availible_runes(self.players_data[s]['session_id'])}}))
 		else:
 			self.send_data(s, prepare_object_to_sending('value_error'))
 

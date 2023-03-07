@@ -240,9 +240,10 @@ class Main(Client):
 
 	def struct_players_info(self, gf, players_info):
 		self.scores = []
+		#if not gf.game_status == 3:
 		self.struct_self_info(gf, players_info['player_info'])
-
 		players_info = players_info['other_players']
+
 
 		for player in players_info:
 			if type(player) == type(0):
