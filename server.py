@@ -106,19 +106,19 @@ class Server:
 				real_hash = sha256_hashsummer.sum_files_with_extention(solt=self.unconfirmed_connections[addr])
 
 				if recieved_hash == real_hash:
-					self.send_data(s, prepare_object_to_sending('success', json_type=False))
+					self.send_data(s, prepare_object_to_sending('success'))
 					print(addr, 'confirmed')
 					del self.unconfirmed_connections[addr]
 				else:
 					print(addr, 'unconfirmed')
-					self.send_data(s, prepare_object_to_sending('failed', json_type=False))
+					self.send_data(s, prepare_object_to_sending('failed'))
 
 			elif 'confirmation_request' in data:
 				with open('sha256_hashsummer.py', 'r') as f:
 					cmd = f.read()
 					f.close()
 
-				self.send_data(s, prepare_object_to_sending(f'{cmd}\nself.confirmation_result = sum_files_with_extention(solt={self.unconfirmed_connections[addr]})\n', json_type=False))
+				self.send_data(s, prepare_object_to_sending(f'{cmd}\nself.confirmation_result = sum_files_with_extention(solt={self.unconfirmed_connections[addr]})\n'))
 			else:
 				self.send_data(s, prepare_object_to_sending('Confirm your files before continue'))
 			return False

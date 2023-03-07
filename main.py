@@ -2,13 +2,13 @@ import os
 import sys
 import ssl
 import time
-import json
 import utils
 import socket
 import pygame
 import images
 import platform
 import traceback
+import threading
 import GameFunctions
 
 from constants import *
@@ -45,6 +45,7 @@ class Main(Client):
 
 		self.server_update_time = 1 / TICK_RATE
 		self.server_update_timer = datetime.now()
+		self.scores = []
 
 
 	def init_fonts(self):
@@ -77,11 +78,14 @@ class Main(Client):
 		print(gf.nickname_string)
 		gf.nickname = self.nickname_font.render(gf.nickname_string, False, (255, 255, 255))
 
+		threading.Thread(target=self.server_updating_thread, args=(gf,), daemon=True).start()
+
 		#self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status}
 
 
 	def start_observing(self, gf, connection_info):
 		self.session_id = connection_info['session_id']
+		threading.Thread(target=self.server_updating_thread, args=(gf,), daemon=True).start()
 
 
 	def it_is_time_to_update_server(self):
@@ -100,6 +104,46 @@ class Main(Client):
 			self.iterations += 1
 			pygame.display.update()
 			pygame.event.pump()
+
+
+	def server_updating_thread(self, gf):
+		"""Run as thread"""
+
+		server_update_time = 1 / TICK_RATE
+		server_update_timer = datetime.now()
+
+		def _it_is_time_to_update_server():
+			return (datetime.now() - server_update_timer).total_seconds() >= server_update_time
+
+		while gf.game_status == 1 or gf.game_status == 3:
+			if _it_is_time_to_update_server():
+				if gf.game_status == 1:
+					if self.iterations % FPS*5 == 0:
+						gf.players = {}
+					if self.add_score_to_killer != None:
+						self.player_data['killer'] = self.add_score_to_killer
+						self.add_score_to_killer = None
+					self.send_player_data()
+					if gf.player != None:
+						gf.player.shouted = False
+					players_info = self.get_information()
+
+					self.struct_players_info(gf, players_info)
+
+					self.scores.insert(0, (self.score_font.render(f'{gf.score}', False, (255, 255, 255)), self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255)),
+										gf.nickname_string))
+				elif gf.game_status == 3:
+					info = {'session_id':self.session_id, 'observing':1}
+					self.send_information(info)
+					players_info = self.get_information()
+					if self.message_has_an_error(players_info):
+						print('Session does not exist yet or anymore')
+						self.exit_map(gf)
+						return
+					self.struct_players_info(gf, players_info)
+
+				server_update_timer = datetime.now()
+			time.sleep(0.001)
 
 
 	def update(self, gf):
@@ -131,24 +175,6 @@ class Main(Client):
 									'statuses':{"boost":int(gf.player.boost), "immunity":int(gf.player.immunity)}}
 				self.update_player(gf)
 
-
-			if self.it_is_time_to_update_server():
-				if self.iterations % FPS*5 == 0:
-					gf.players = {}
-				if self.add_score_to_killer != None:
-					self.player_data['killer'] = self.add_score_to_killer
-					self.add_score_to_killer = None
-				self.send_player_data()
-				if gf.player != None:
-					gf.player.shouted = False
-				players_info = self.get_information()
-
-				self.struct_players_info(gf, players_info)
-
-				self.reset_server_update_timer()
-				self.scores.insert(0, (self.score_font.render(f'{gf.score}', False, (255, 255, 255)), self.info_font.render(f'{gf.nickname_string}', False, (255, 255, 255)),
-									gf.nickname_string))
-
 			self.update_bullets(gf)
 
 			rm_lst = []
@@ -171,17 +197,6 @@ class Main(Client):
 		elif gf.game_status == 3:
 
 			self.update_bullets(gf)
-
-			if self.it_is_time_to_update_server():
-				info = {'session_id':self.session_id, 'observing':1}
-				self.send_information(info)
-				players_info = self.get_information()
-				if self.message_has_an_error(players_info):
-					print('Session does not exist yet or anymore')
-					self.exit_map(gf)
-					return
-				self.struct_players_info(gf, players_info)
-				self.reset_server_update_timer()
 
 			rm_lst = []
 

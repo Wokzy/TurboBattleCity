@@ -12,7 +12,7 @@ def get_sum_of_file(filename):
 def sum_files_with_extention(extentions=['.py', '.png', '.exe'], dirs=[], solt=0):
 	import os
 	import hashlib
-	string = '{solt}'
+	#string = '{solt}'
 
 	if './' not in dirs:
 		if dirs == []:
@@ -33,4 +33,4 @@ def sum_files_with_extention(extentions=['.py', '.png', '.exe'], dirs=[], solt=0
 						data = f.read()
 						f.close()
 					sm += int(hashlib.sha256(data).hexdigest(), base=16)
-	return hashlib.sha256(f'{string}{sm}'.encode()).hexdigest()
+	return hashlib.sha256(f'{solt}{sm}'.encode()).hexdigest()

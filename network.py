@@ -11,7 +11,7 @@ from constants import ENCODING, SERVER_IP, SERVER_PORT, RECIEVE_BYTES_AMOUNT, \
 						TICK_RATE, END_FLAG, BEGIN_FLAG
 
 
-def prepare_object_to_sending(obj, split_data=False, json_type=True):
+def prepare_object_to_sending(obj, split_data=False):
 	"""
 	formats string to prepare for sending
 	"""
@@ -57,11 +57,11 @@ class Client:
 		will be ok.
 		"""
 
-		self.socket.send(prepare_object_to_sending('confirmation_request', json_type=False))
+		self.socket.send(prepare_object_to_sending('confirmation_request'))
 		command = self.get_information(parse=False)
 		exec(command)
 		print(self.confirmation_result)
-		self.socket.send(prepare_object_to_sending(f'confirmation_response {self.confirmation_result}', json_type=False))
+		self.socket.send(prepare_object_to_sending(f'confirmation_response {self.confirmation_result}'))
 
 
 		if self.get_information(parse=False) == 'success':
