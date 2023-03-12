@@ -7,6 +7,7 @@ import ssl
 import json
 import socket as socket_lib
 
+from datetime import datetime
 from constants import ENCODING, SERVER_IP, SERVER_PORT, RECIEVE_BYTES_AMOUNT, \
 						TICK_RATE, END_FLAG, BEGIN_FLAG
 
@@ -22,6 +23,10 @@ def prepare_object_to_sending(obj, split_data=False):
 		string = str(obj)
 
 	return string.replace("'", '"').encode(ENCODING)
+
+
+def get_current_timestamp():
+	return datetime.timestamp(datetime.now())
 
 
 class Client:
@@ -60,7 +65,6 @@ class Client:
 		self.socket.send(prepare_object_to_sending('confirmation_request'))
 		command = self.get_information(parse=False)
 		exec(command)
-		print(self.confirmation_result)
 		self.socket.send(prepare_object_to_sending(f'confirmation_response {self.confirmation_result}'))
 
 
@@ -102,7 +106,10 @@ class Client:
 		info = info[len(BEGIN_FLAG):-len(END_FLAG):].decode(ENCODING)
 
 		if parse and ('[' in info or '{' in info):
-			return json.loads(info)
+			try:
+				return json.loads(info)
+			except Exception as e:
+				print(info, e, sep='\n')
 		return info
 
 

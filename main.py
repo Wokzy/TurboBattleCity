@@ -6,6 +6,8 @@ import utils
 import socket
 import pygame
 import images
+import random
+import hashlib
 import platform
 import traceback
 import threading
@@ -22,6 +24,8 @@ pygame.font.init()
 
 class Main(Client):
 	def __init__(self, gf):
+		self.player_ident = hashlib.sha256(f'{random.randint(1, 1<<256)}'.encode()).hexdigest()
+
 		self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
 		pygame.display.set_caption(GAME_NAME)
 
@@ -125,7 +129,7 @@ class Main(Client):
 						self.add_score_to_killer = None
 					self.send_player_data()
 					if gf.player != None:
-						gf.player.shouted = False
+						gf.player.shouted = {'state':0}
 					players_info = self.get_information()
 
 					self.struct_players_info(gf, players_info)
@@ -170,9 +174,9 @@ class Main(Client):
 					gf.ammunition_string = '{:.1f}'.format(DEATH_DURATION - death_time)
 			else:
 				gf.update_battle()
-				self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":int(gf.player.shouted),
+				self.player_data = {"x":gf.player.rect.x, "y":gf.player.rect.y, "rotation":gf.player.rotation, "status":gf.player_status, "shouted":gf.player.shouted,
 									"nickname":gf.nickname_string, "spawn_index":self.spawn_index, 'alive':int(gf.player.alive),
-									'statuses':{"boost":int(gf.player.boost), "immunity":int(gf.player.immunity)}}
+									'statuses':{"boost":int(gf.player.boost), "immunity":int(gf.player.immunity)}, 'id':self.player_ident}
 				self.update_player(gf)
 
 			self.update_bullets(gf)
@@ -242,6 +246,15 @@ class Main(Client):
 		self.scores = []
 		#if not gf.game_status == 3:
 		self.struct_self_info(gf, players_info['player_info'])
+
+		for shoot in set(players_info['shoots']) - set(gf.shoots):
+			content = players_info['shoots'][shoot]
+			if content['id'] in gf.players:
+				gf.shoot(gf.players[content['id']], position=content['position'], rotation=content['rotation'])
+
+		gf.shoots = players_info['shoots']
+
+
 		players_info = players_info['other_players']
 
 
@@ -249,12 +262,12 @@ class Main(Client):
 			if type(player) == type(0):
 				gf.score = player
 				continue
-			addr = player['address']
+			addr = player['id']
 			x = player['x']
 			y = player['y']
 			rot = player['rotation']
 			status = player['status']
-			shouted = player['shouted']
+			#shouted = player['shouted']
 			nickname = player['nickname']
 			spawn_index = player['spawn_index']
 			score = str(player['score'])
@@ -272,8 +285,8 @@ class Main(Client):
 				gf.players[addr].nickname = self.nickname_font.render(nickname, False, (255, 255, 255))
 				gf.players[addr].show_nickname = True
 
-			if shouted:
-				gf.shoot(gf.players[addr])
+			#if shouted:
+			#	gf.shoot(gf.players[addr])
 			#elif status == 'dead':
 			#	gf.players[addr].alive = False
 

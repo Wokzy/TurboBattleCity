@@ -3,8 +3,8 @@ Main game server based on TCP TLS
 """
 
 
+import sys
 import ssl
-import time
 import json
 import random
 import socket
@@ -13,9 +13,13 @@ import hashlib
 import sha256_hashsummer
 
 from datetime import datetime
-from network import prepare_object_to_sending
+from network import prepare_object_to_sending, get_current_timestamp
 from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG,\
-						BEGIN_FLAG, END_FLAG
+						BEGIN_FLAG, END_FLAG, SHOOT_SAVE_DURATION
+
+
+
+NO_VALIDATION = '--no-validation' in sys.argv
 
 
 class Server:
@@ -90,6 +94,7 @@ class Server:
 		session['creation_time'] = datetime.now()
 		session['spawns'] = [True] * session['max_players']
 		session['scores'] = {}
+		session['shoots'] = {} # {datetime.timestamp}
 
 		self.sessions[session['session_id']] = session
 
@@ -105,7 +110,7 @@ class Server:
 				recieved_hash = data.split(' ')[1]
 				real_hash = sha256_hashsummer.sum_files_with_extention(solt=self.unconfirmed_connections[addr])
 
-				if recieved_hash == real_hash:
+				if recieved_hash == real_hash or NO_VALIDATION:
 					self.send_data(s, prepare_object_to_sending('success'))
 					print(addr, 'confirmed')
 					del self.unconfirmed_connections[addr]
@@ -171,6 +176,10 @@ class Server:
 				player_info['rune_collected'] = self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed']
 				self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed'] = False
 
+		if self.players_data[s]['player_data']['shouted']['state']:
+			self.players_data[s]['player_data']['shouted']['id'] = self.players_data[s]['player_data']['id']
+			self.sessions[session_id]['shoots'][str(get_current_timestamp())] = self.players_data[s]['player_data']['shouted']
+
 		player_info['runes'] = self.get_availible_runes(session_id)
 
 		self.sessions[session_id]['players_data'][s] = self.players_data[s]['player_data']
@@ -178,7 +187,8 @@ class Server:
 		self.sessions[session_id]['players_data'][s]['connection_time'] = datetime.now().timestamp()
 		self.sessions[session_id]['players_data'][s]['score'] = self.sessions[session_id]['scores'][self.players_data[s]['player_data']['spawn_index']]
 
-		data = {'other_players':self.collect_other_players_data(s), 'player_info':player_info}
+		data = {'other_players':self.collect_other_players_data(s), 'player_info':player_info, 'timestamp':get_current_timestamp(),
+				'shoots':self.sessions[session_id]['shoots']}
 		self.send_data(s, prepare_object_to_sending(data))
 
 
@@ -226,6 +236,15 @@ class Server:
 				if availible_spots:
 					self.sessions[session]['runes']['runes'][random.choice(availible_spots)]['is_placed'] = random.choice(RUNES_CONFIG['runes'])
 
+			del_names = []
+
+			for shoot in self.sessions[session]['shoots']:
+				if get_current_timestamp() - float(shoot) >= SHOOT_SAVE_DURATION:
+					del_names.append(shoot)
+
+			for name in del_names:
+				del self.sessions[session]['shoots'][name]
+
 
 
 
@@ -268,7 +287,8 @@ class Server:
 						self.disconnect(s)
 
 			for s in self.writable:
-				self.outputs.remove(s)
+				if s in self.outputs:
+					self.outputs.remove(s)
 				if self.players_data[s] == 'get_sessions_info':
 					self.remove_player_from_sessions(s)
 					self.send_data(s, prepare_object_to_sending(self.get_sessions_info()))
@@ -287,5 +307,10 @@ class Server:
 
 			self.iteration += 1
 
-
-Server().main()
+try:
+	Server().main()
+except KeyboardInterrupt:
+	exit()
+except Exception as e:
+	print(e)
+	input()

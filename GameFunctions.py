@@ -45,6 +45,7 @@ class GameFunctions:
 		self.boost_bar_background = images.get_boost_bar()['background']
 		self.death_timer = None
 		self.reveal_grass = False
+		self.shoots = {}
 
 
 	def input_map_level(self):
@@ -304,23 +305,31 @@ class GameFunctions:
 		self.update_ui()
 
 
-	def shoot(self, tank):
-		if tank.shoot_iteration < tank.shoot_speed:
-			return
+	def shoot(self, tank=None, rotation=None, position=None):
+		if type(position) == list:
+			position = (position[0], position[1])
 
-		if tank == self.player:
-			self.ammunition -= 1
+		if rotation == None or position == None:
+			if tank.shoot_iteration < tank.shoot_speed:
+				return
 
-		if tank.rotation == 'forward':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y - 8*AVERAGE_MULTIPLYER), shooter=tank))
-		elif tank.rotation == 'back':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y + 15*AVERAGE_MULTIPLYER), shooter=tank))
-		elif tank.rotation == 'right':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x + 15*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER), shooter=tank))
-		elif tank.rotation == 'left':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x - 8*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER), shooter=tank))
+			if tank == self.player:
+				self.ammunition -= 1
 
-		tank.shouted = True
+			rotation = tank.rotation
+
+			if tank.rotation == 'forward':
+				position = (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y - 8*AVERAGE_MULTIPLYER)
+			elif tank.rotation == 'back':
+				position = (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y + 15*AVERAGE_MULTIPLYER)
+			elif tank.rotation == 'right':
+				position = (tank.rect.x + 15*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER)
+			elif tank.rotation == 'left':
+				position = (tank.rect.x - 8*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER)
+
+		self.bullets.append(objects.Bullet(rotation, position, shooter=tank))
+
+		tank.shouted = {'state':1, 'position':[position[0], position[1]], 'rotation':rotation}
 		tank.shoot_iteration = 0
 
 
