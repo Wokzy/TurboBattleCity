@@ -176,7 +176,7 @@ class Server:
 				player_info['rune_collected'] = self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed']
 				self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed'] = False
 
-		if self.players_data[s]['player_data']['shouted']['state']:\
+		if self.players_data[s]['player_data']['shouted']['state']:
 			timestamp = str(get_current_timestamp())
 			self.players_data[s]['player_data']['shouted']['id'] = self.players_data[s]['player_data']['id']
 			self.sessions[session_id]['shoots'][timestamp] = self.players_data[s]['player_data']['shouted']
