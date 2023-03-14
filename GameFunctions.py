@@ -7,6 +7,7 @@ import hashlib
 from constants import *
 from scripts import objects, maps
 from datetime import datetime, timedelta
+from network import prepare_object_to_sending
 
 
 class GameFunctions:
@@ -44,6 +45,7 @@ class GameFunctions:
 		self.boost_bar_background = images.get_boost_bar()['background']
 		self.death_timer = None
 		self.reveal_grass = False
+		self.shoots = {}
 
 
 	def input_map_level(self):
@@ -115,7 +117,7 @@ class GameFunctions:
 			except Exception as e:
 				print(e)
 		session['session_id'] = hashlib.md5(str(random.randint(1, 10**29)).encode()).hexdigest()
-		socket.send(utils.prepare_object_to_sending('create_session' + str(session)))
+		socket.send(prepare_object_to_sending('create_session' + str(session)))
 
 
 	def connect_to_session(self, socket, sessions_info, get_information, reason='playing'):
@@ -133,7 +135,7 @@ class GameFunctions:
 			session['connect_to_session'] = "1"
 			session['reason'] = reason
 
-			socket.send(utils.prepare_object_to_sending(session))
+			socket.send(prepare_object_to_sending(session))
 			res = get_information()
 
 			if res == 'overflowed':
@@ -303,24 +305,35 @@ class GameFunctions:
 		self.update_ui()
 
 
-	def shoot(self, tank):
-		if tank.shoot_iteration < tank.shoot_speed:
-			return
+	def shoot(self, tank=None, rotation=None, position=None):
+		if type(position) == list:
+			position = (position[0], position[1])
 
-		if tank == self.player:
-			self.ammunition -= 1
+		if rotation == None or position == None:
+			if tank.shoot_iteration < tank.shoot_speed:
+				return
 
-		if tank.rotation == 'forward':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y - 8*AVERAGE_MULTIPLYER), shooter=tank))
-		elif tank.rotation == 'back':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y + 15*AVERAGE_MULTIPLYER), shooter=tank))
-		elif tank.rotation == 'right':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x + 15*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER), shooter=tank))
-		elif tank.rotation == 'left':
-			self.bullets.append(objects.Bullet(tank.rotation, (tank.rect.x - 8*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER), shooter=tank))
+			if tank == self.player:
+				self.ammunition -= 1
 
-		tank.shouted = True
+			rotation = tank.rotation
+
+			if tank.rotation == 'forward':
+				position = (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y - 8*AVERAGE_MULTIPLYER)
+			elif tank.rotation == 'back':
+				position = (tank.rect.center[0] - 4*AVERAGE_MULTIPLYER, tank.rect.y + 15*AVERAGE_MULTIPLYER)
+			elif tank.rotation == 'right':
+				position = (tank.rect.x + 15*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER)
+			elif tank.rotation == 'left':
+				position = (tank.rect.x - 8*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER)
+
+		bullet = objects.Bullet(rotation, position, shooter=tank)
+		self.bullets.append(bullet)
+
+		tank.shouted = {'state':1, 'position':[position[0], position[1]], 'rotation':rotation}
 		tank.shoot_iteration = 0
+
+		return bullet
 
 
 	def go_on_reload(self):

@@ -1,7 +1,11 @@
+"""
+Main game server based on TCP TLS
+"""
+
+
+import sys
 import ssl
-import time
 import json
-import utils
 import random
 import socket
 import select
@@ -9,7 +13,13 @@ import hashlib
 import sha256_hashsummer
 
 from datetime import datetime
-from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG
+from network import prepare_object_to_sending, get_current_timestamp
+from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG,\
+						BEGIN_FLAG, END_FLAG, SHOOT_SAVE_DURATION
+
+
+
+NO_VALIDATION = '--no-validation' in sys.argv
 
 
 class Server:
@@ -18,7 +28,8 @@ class Server:
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 		context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-		context.load_cert_chain('tbc_cert.pem', 'tbc_key.pem')
+		# context.load_cert_chain('tbc_cert.pem', 'tbc_key.pem')
+		context.load_cert_chain('certificate.pem')
 
 		self.sock = context.wrap_socket(self.sock, server_side=True)
 		#self.sock = ssl.wrap_socket(self.sock, server_side=True, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
@@ -83,8 +94,13 @@ class Server:
 		session['creation_time'] = datetime.now()
 		session['spawns'] = [True] * session['max_players']
 		session['scores'] = {}
+		session['shoots'] = {} # {datetime.timestamp}
 
 		self.sessions[session['session_id']] = session
+
+
+	def send_data(self, sock, data:bytes):
+		sock.send(BEGIN_FLAG + data + END_FLAG)
 
 
 	def check_player_files_validation(self, s, data):
@@ -94,22 +110,22 @@ class Server:
 				recieved_hash = data.split(' ')[1]
 				real_hash = sha256_hashsummer.sum_files_with_extention(solt=self.unconfirmed_connections[addr])
 
-				if recieved_hash == real_hash:
-					s.send(utils.prepare_object_to_sending('success'))
+				if recieved_hash == real_hash or NO_VALIDATION:
+					self.send_data(s, prepare_object_to_sending('success'))
 					print(addr, 'confirmed')
 					del self.unconfirmed_connections[addr]
 				else:
 					print(addr, 'unconfirmed')
-					s.send(utils.prepare_object_to_sending('failed'))
+					self.send_data(s, prepare_object_to_sending('failed'))
 
 			elif 'confirmation_request' in data:
 				with open('sha256_hashsummer.py', 'r') as f:
 					cmd = f.read()
 					f.close()
 
-				s.send(utils.prepare_object_to_sending(f'{cmd}\nself.confirmation_result = sum_files_with_extention(solt={self.unconfirmed_connections[addr]})'))
+				self.send_data(s, prepare_object_to_sending(f'{cmd}\nself.confirmation_result = sum_files_with_extention(solt={self.unconfirmed_connections[addr]})\n'))
 			else:
-				s.send(utils.prepare_object_to_sending('Confirm your files before continue'))
+				self.send_data(s, prepare_object_to_sending('Confirm your files before continue'))
 			return False
 
 		return True
@@ -119,17 +135,17 @@ class Server:
 		self.players_data[s] = json.loads(self.players_data[s])
 		session_id = self.players_data[s]['session_id']
 		if self.players_data[s]['reason'] == 'observing':
-			s.send(utils.prepare_object_to_sending({'level':self.sessions[session_id]['level'], 'session_id':session_id, 'observing':1}))
+			self.send_data(s, prepare_object_to_sending({'level':self.sessions[session_id]['level'], 'session_id':session_id, 'observing':1}))
 		elif session_id in self.sessions:
 			if len(self.sessions[session_id]['players_data']) < self.sessions[session_id]['max_players']:
 				spawn_index = random.choice([i for i in range(len(self.sessions[session_id]['spawns'])) if self.sessions[session_id]['spawns'][i] == True])
 				self.sessions[session_id]['spawns'][spawn_index] = s
 				self.sessions[session_id]['scores'][spawn_index] = 0
-				s.send(utils.prepare_object_to_sending({'spawn_index':spawn_index, 'level':self.sessions[session_id]['level'], 'session_id':session_id}))
+				self.send_data(s, prepare_object_to_sending({'spawn_index':spawn_index, 'level':self.sessions[session_id]['level'], 'session_id':session_id}))
 			else:
-				s.send(utils.prepare_object_to_sending('overflowed'))
+				self.send_data(s, prepare_object_to_sending('overflowed'))
 		else:
-			s.send(utils.prepare_object_to_sending('There is no such session'))
+			self.send_data(s, prepare_object_to_sending('There is no such session'))
 
 
 	def collect_other_players_data(self, s):
@@ -140,6 +156,10 @@ class Server:
 			else:
 				data.append(self.sessions[self.players_data[s]['session_id']]['scores'][self.sessions[self.players_data[s]['session_id']]['spawns'].index(s)])
 		return data
+
+
+	def get_availible_runes(self, session_id):
+		return [{'rune':self.sessions[session_id]['runes']['runes'][i]['is_placed'], 'coords':self.sessions[session_id]['runes']['runes'][i]['coords'], 'id':i} for i in self.sessions[session_id]['runes']['runes'] if self.sessions[session_id]['runes']['runes'][i]['is_placed'] != False]
 
 
 	def process_players_data(self, s):
@@ -156,23 +176,30 @@ class Server:
 				player_info['rune_collected'] = self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed']
 				self.sessions[session_id]['runes']['runes'][collected_rune]['is_placed'] = False
 
-		player_info['runes'] = [{'rune':self.sessions[session_id]['runes']['runes'][i]['is_placed'], 'coords':self.sessions[session_id]['runes']['runes'][i]['coords'], 'id':i} for i in self.sessions[session_id]['runes']['runes'] if self.sessions[session_id]['runes']['runes'][i]['is_placed'] != False]
+		if self.players_data[s]['player_data']['shouted']['state']:\
+			timestamp = str(get_current_timestamp())
+			self.players_data[s]['player_data']['shouted']['id'] = self.players_data[s]['player_data']['id']
+			self.sessions[session_id]['shoots'][timestamp] = self.players_data[s]['player_data']['shouted']
+			self.sessions[session_id]['shoots'][timestamp]['timestamp'] = float(timestamp)
+
+		player_info['runes'] = self.get_availible_runes(session_id)
 
 		self.sessions[session_id]['players_data'][s] = self.players_data[s]['player_data']
 		self.sessions[session_id]['players_data'][s]['address'] = f"{s.getpeername()[0]}:{s.getpeername()[1]}" # ip:port
 		self.sessions[session_id]['players_data'][s]['connection_time'] = datetime.now().timestamp()
 		self.sessions[session_id]['players_data'][s]['score'] = self.sessions[session_id]['scores'][self.players_data[s]['player_data']['spawn_index']]
 
-		data = {'other_players':self.collect_other_players_data(s), 'player_info':player_info}
-		s.send(utils.prepare_object_to_sending(data))
+		data = {'other_players':self.collect_other_players_data(s), 'player_info':player_info, 'timestamp':get_current_timestamp(),
+				'shoots':self.sessions[session_id]['shoots']}
+		self.send_data(s, prepare_object_to_sending(data))
 
 
 	def process_observing(self, s):
 		self.players_data[s] = json.loads(self.players_data[s])
 		if self.players_data[s]['session_id'] in self.sessions:
-			s.send(utils.prepare_object_to_sending(self.collect_other_players_data(s)))
+			self.send_data(s, prepare_object_to_sending({'other_players':self.collect_other_players_data(s), 'player_info':{'runes':self.get_availible_runes(self.players_data[s]['session_id'])}}))
 		else:
-			s.send(utils.prepare_object_to_sending('value_error'))
+			self.send_data(s, prepare_object_to_sending('value_error'))
 
 
 	def check_expired_players_and_sessions(self):
@@ -211,6 +238,15 @@ class Server:
 				if availible_spots:
 					self.sessions[session]['runes']['runes'][random.choice(availible_spots)]['is_placed'] = random.choice(RUNES_CONFIG['runes'])
 
+			del_names = []
+
+			for shoot in self.sessions[session]['shoots']:
+				if get_current_timestamp() - float(shoot) >= SHOOT_SAVE_DURATION:
+					del_names.append(shoot)
+
+			for name in del_names:
+				del self.sessions[session]['shoots'][name]
+
 
 
 
@@ -225,8 +261,10 @@ class Server:
 
 					#if len(self.players_data) >= 4:
 					#	continue
-
-					self.accept_connection(s)
+					try:
+						self.accept_connection(s)
+					except:
+						continue
 				else:
 					try:
 						data = s.recv(1024)
@@ -251,10 +289,11 @@ class Server:
 						self.disconnect(s)
 
 			for s in self.writable:
-				self.outputs.remove(s)
+				if s in self.outputs:
+					self.outputs.remove(s)
 				if self.players_data[s] == 'get_sessions_info':
 					self.remove_player_from_sessions(s)
-					s.send(utils.prepare_object_to_sending(self.get_sessions_info()))
+					self.send_data(s, prepare_object_to_sending(self.get_sessions_info()))
 				elif 'connect_to_session' in self.players_data[s]:
 					self.connect_player_to_session(s)
 				elif 'player_data' in self.players_data[s]:
@@ -270,5 +309,10 @@ class Server:
 
 			self.iteration += 1
 
-
-Server().main()
+try:
+	Server().main()
+except KeyboardInterrupt:
+	exit()
+except Exception as e:
+	print(e)
+	input()

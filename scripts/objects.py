@@ -65,7 +65,7 @@ class Tank:
 
 		self.shoot_speed = shoot_speed
 		self.shoot_iteration = shoot_speed
-		self.shouted = False
+		self.shouted = {'state':0}
 
 		self.speed = TANK_SPEED
 		self.spawn_index = spawn_index
