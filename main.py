@@ -250,7 +250,9 @@ class Main(Client):
 		for shoot in set(players_info['shoots']) - set(gf.shoots):
 			content = players_info['shoots'][shoot]
 			if content['id'] in gf.players:
-				gf.shoot(gf.players[content['id']], position=content['position'], rotation=content['rotation'])
+				bullet = gf.shoot(gf.players[content['id']], position=content['position'], rotation=content['rotation'])
+				for i in range(int((players_info['timestamp'] - float(shoot)) // (1 / FPS))):
+					bullet.update()
 
 		gf.shoots = players_info['shoots']
 

@@ -327,10 +327,13 @@ class GameFunctions:
 			elif tank.rotation == 'left':
 				position = (tank.rect.x - 8*AVERAGE_MULTIPLYER, tank.rect.center[1] - 4*AVERAGE_MULTIPLYER)
 
-		self.bullets.append(objects.Bullet(rotation, position, shooter=tank))
+		bullet = objects.Bullet(rotation, position, shooter=tank)
+		self.bullets.append(bullet)
 
 		tank.shouted = {'state':1, 'position':[position[0], position[1]], 'rotation':rotation}
 		tank.shoot_iteration = 0
+
+		return bullet
 
 
 	def go_on_reload(self):
