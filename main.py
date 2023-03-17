@@ -152,7 +152,7 @@ class Main(Client):
 
 	def update(self, gf):
 
-		if utils.event_handling(gf) == 'quit':
+		if utils.event_handling(gf, main = self) == 'quit':
 			self.quit()
 
 		if gf.game_status == 0:

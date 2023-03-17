@@ -15,7 +15,7 @@ def player_death():
 	if controller:
 		controller.rumble(low_frequency=True, high_frequency=False, duration=525)
 
-def event_handling(gf):
+def event_handling(gf, main):
 	global controller
 	pressed_keys = pygame.key.get_pressed()
 
@@ -26,13 +26,13 @@ def event_handling(gf):
 			mos_pos = pygame.mouse.get_pos()
 			for obj in gf.additional_objects:
 				if obj.__class__.__name__ == 'Button' and obj.rect.collidepoint(mos_pos):
-					obj.action(gf = gf, main = self)
+					obj.action(gf = gf, main = main)
 					break
 		#elif event.type == pygame.KEYDOWN:
 			#if event.key == pygame.K_t and gf.player != None:
 			#	gf.player.alive = False
 
-	if gf.game_status == 1 and gf.player != None and gf.player.alive:# and self.iterations % MOVEMENT_TICKS == 0:
+	if gf.game_status == 1 and gf.player != None and gf.player.alive:
 		control_buttons_pressed = []
 		control_axes = (0, 0)
 		control_hat = (0, 0)

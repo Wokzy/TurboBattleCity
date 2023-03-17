@@ -30,10 +30,12 @@ def get_current_timestamp():
 
 
 class Client:
-	def __init__(self):
-		self.server = (SERVER_IP, SERVER_PORT)
+	def __init__(self, server = (SERVER_IP, SERVER_PORT), validation = True):
+		self.server = server
 		self.initialize_socket()
-		self.files_validation()
+
+		if validation:
+			self.files_validation()
 
 		self.player_info = None
 
@@ -51,6 +53,11 @@ class Client:
 		context.load_verify_locations(cadata=ssl.get_server_certificate(self.server))
 
 		self.socket = context.wrap_socket(self.socket)
+		self.connect()
+
+
+	def connect(self):
+		"""Connection"""
 
 		self.socket.connect(self.server)
 		print('Cipher used:', self.socket.cipher())

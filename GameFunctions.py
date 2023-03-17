@@ -8,7 +8,7 @@ from constants import *
 from scripts import objects, maps
 from datetime import datetime, timedelta
 from network import prepare_object_to_sending
-
+from ranking.client import RankingClient
 
 class GameFunctions:
 	def __init__(self, level=1):
@@ -29,6 +29,8 @@ class GameFunctions:
 
 		self.adding_enemyes_speed = FPS * 1
 		self.adding_enemyes_iteration = 0
+
+		self.ranking = RankingClient()
 
 	def init_game_objects(self):
 		self.additional_objects = [objects.Button('leave_session', images.get_leave_session_button(), (WIDTH - LEAVE_SESSION_BUTTON_SIZE[0], 0), LEAVE_SESSION_BUTTON_SIZE)]
@@ -65,9 +67,15 @@ class GameFunctions:
 			#self.additional_objects.append(objects.Button('start_battle', images.get_start_button(), (WIDTH//2 - START_BUTTON_SIZE[0]//2, HEIGHT//2 - START_BUTTON_SIZE[1]//2), START_BUTTON_SIZE))
 			if socket:
 				while True:
-					print(f'Your nickname is: {self.nickname_string}\n')
+					if self.ranking is None or self.ranking.user is None:
+						print('You are not connected to the statistics server')
+						print(f'Your nickname is: {self.nickname_string}\n')
+					else:
+						print(f'You are connected as {self.ranking.user["username"]}')
+						self.nickname = self.nickname_string = self.ranking.user["username"]
+
 					options = '1 - show sessions\n' + '2 - create session\n' + '3 - connect to session\n' + '4 - change nickname\n' + \
-								'5 - map preview\n' + '6 - observe game\n' + '0 - leave\n'
+								'5 - map preview\n' + '6 - observe game\n' + '7 - ranking system menu\n' + '0 - leave\n'
 					ch = input(options)
 
 					socket.send('get_sessions_info'.encode(ENCODING))
@@ -87,8 +95,14 @@ class GameFunctions:
 						return 'map_preview'
 					elif ch == '6':
 						return self.observe_session(socket, sessions_info, get_information)
+					elif ch == '7' and self.ranking.connected_to_server:
+						self.ranking.main_menu()
 					elif ch == '0':
 						return 'leave'
+
+
+	def ranking_login(self):
+		pass
 
 
 	def show_avalible_sessions(self, sessions_info):
