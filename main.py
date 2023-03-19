@@ -58,11 +58,13 @@ class Main(Client):
 			self.nickname_font = pygame.font.SysFont(SYS_FONT, NICK_FONT_SIZE)
 			self.score_font = pygame.font.SysFont(SYS_FONT, SCORE_FONT_SIZE)
 			self.ammunition_font = pygame.font.SysFont(SYS_FONT, AMMUNITION_FONT_SIZE)
+			self.countdown_font = pygame.font.SysFont(SYS_FONT, COUNTDOWN_TEXT_SIZE)
 		else:
 			self.info_font = pygame.font.Font(GAME_FONT, INFO_FONT_SIZE)
 			self.nickname_font = pygame.font.Font(GAME_FONT, NICK_FONT_SIZE)
 			self.score_font = pygame.font.Font(GAME_FONT, SCORE_FONT_SIZE)
 			self.ammunition_font = pygame.font.Font(GAME_FONT, AMMUNITION_FONT_SIZE)
+			self.countdown_font = pygame.font.Font(GAME_FONT, COUNTDOWN_TEXT_SIZE)
 		self.score_font_colors = [(180, 25, 25), (25, 180, 25), (25, 25, 180),]*3
 
 
@@ -164,6 +166,10 @@ class Main(Client):
 				self.start_observing(gf, res)
 			elif res != None:
 				self.start_battle(gf, res)
+		elif gf.game_status in [1, 2, 3]:
+			if gf.session_status == 'finished':
+				self.exit_map(gf)
+
 
 		if gf.game_status == 1:
 			if gf.player == None:
@@ -255,6 +261,7 @@ class Main(Client):
 					bullet.update()
 
 		gf.shoots = players_info['shoots']
+		gf.session_status = players_info['session_status']
 
 
 		players_info = players_info['other_players']
@@ -358,6 +365,11 @@ class Main(Client):
 				blit.blit_runes(screen=self.screen, gf=gf)
 
 			blit.blit_grass(screen=self.screen, gf=gf)
+			if gf.game_status == 1:
+				if gf.session_status.isnumeric():
+					countdown = self.countdown_font.render(gf.session_status, False, (255, 125, 45))
+					countdown_pos = (WIDTH // 2 - COUNTDOWN_TEXT_SIZE // 4, HEIGHT // 2 - COUNTDOWN_TEXT_SIZE // 2)
+					self.screen.blit(countdown, countdown_pos)
 			#blit.blit_text()
 
 			if gf.game_status in [1, 3]:

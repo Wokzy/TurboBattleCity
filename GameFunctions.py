@@ -48,6 +48,7 @@ class GameFunctions:
 		self.death_timer = None
 		self.reveal_grass = False
 		self.shoots = {}
+		self.session_status = 'waiting'
 
 
 	def input_map_level(self):
@@ -101,10 +102,6 @@ class GameFunctions:
 						return 'leave'
 
 
-	def ranking_login(self):
-		pass
-
-
 	def show_avalible_sessions(self, sessions_info):
 		print('Avalible_sessions:')
 		idx = 0
@@ -121,8 +118,17 @@ class GameFunctions:
 				if max_players_choice.isnumeric():
 					max_players = min(max(int(max_players_choice), 2), max_players)
 
+				ranked = input('Game type (0 - casual, ranked - 1): ')
+				ranked = int(ranked.isnumeric() and int(ranked))
+
+				score_bound = input('Enter score bound (1-100):')
+				if score_bound.isnumeric() and int(score_bound) in range(1, 101):
+					score_bound = int(score_bound)
+				else:
+					score_bound = 25
+
 				session = {'level': level, 'runes':self.get_coords(level=level, obj = maps.RUNE, TYPE=list, move=(RUNE_SIZE[0]//2, RUNE_SIZE[1]//2)),
-							'max_players':max_players}
+							'max_players':max_players, 'ranked':ranked, 'score_bound':score_bound}
 
 				password = input('Enter password (leave empty for no password) -> ')
 				if password:
@@ -148,6 +154,9 @@ class GameFunctions:
 						return
 			session['connect_to_session'] = "1"
 			session['reason'] = reason
+
+			if self.ranking.user:
+				session['ranked_user'] = self.ranking.user['username']
 
 			socket.send(prepare_object_to_sending(session))
 			res = get_information()

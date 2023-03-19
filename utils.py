@@ -32,7 +32,7 @@ def event_handling(gf, main):
 			#if event.key == pygame.K_t and gf.player != None:
 			#	gf.player.alive = False
 
-	if gf.game_status == 1 and gf.player != None and gf.player.alive:
+	if gf.game_status == 1 and gf.player != None and gf.player.alive and gf.session_status == 'running':
 		control_buttons_pressed = []
 		control_axes = (0, 0)
 		control_hat = (0, 0)

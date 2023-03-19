@@ -15,11 +15,12 @@ import sha256_hashsummer
 from datetime import datetime
 from network import prepare_object_to_sending, get_current_timestamp
 from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG,\
-						BEGIN_FLAG, END_FLAG, SHOOT_SAVE_DURATION
+						BEGIN_FLAG, END_FLAG, SHOOT_SAVE_DURATION, FINISHED_SESSION_TIMEOUT
 
 
 
 NO_VALIDATION = '--no-validation' in sys.argv
+RANKED_SERVER_SIGNATURE = '5ffce4f06df' #sys.argv[sys.argv.index('--signature') + 1]
 
 
 class Server:
@@ -95,6 +96,11 @@ class Server:
 		session['spawns'] = [True] * session['max_players']
 		session['scores'] = {}
 		session['shoots'] = {} # {datetime.timestamp}
+		session['ranked_users'] = {}
+		session['session_status'] = 'waiting'
+
+		if session['ranked']:
+			pass
 
 		self.sessions[session['session_id']] = session
 
@@ -137,8 +143,25 @@ class Server:
 		if self.players_data[s]['reason'] == 'observing':
 			self.send_data(s, prepare_object_to_sending({'level':self.sessions[session_id]['level'], 'session_id':session_id, 'observing':1}))
 		elif session_id in self.sessions:
+			if self.sessions[session_id]['session_status'] == 'finished':
+				self.send_data(s, prepare_object_to_sending('session has been finished'))
+				return
+			elif self.sessions[session_id]['ranked'] and self.sessions[session_id]['session_status'] == 'running':
+				self.send_data(s, prepare_object_to_sending('This ranked match has been already started'))
+				return
+
+			if 'ranked_user' in self.players_data[s]:
+				self.sessions[session_id]['ranked_users'][s] = {'username':self.players_data[s]['ranked_user'], 'score':0}
+			elif self.sessions[session_id]['ranked']:
+				self.send_data(s, prepare_object_to_sending('you have to be logined to play ranked games'))
+				return
+
 			if len(self.sessions[session_id]['players_data']) < self.sessions[session_id]['max_players']:
-				spawn_index = random.choice([i for i in range(len(self.sessions[session_id]['spawns'])) if self.sessions[session_id]['spawns'][i] == True])
+				availible_spots = [i for i in range(len(self.sessions[session_id]['spawns'])) if self.sessions[session_id]['spawns'][i] == True]
+				if len(availible_spots) == 0:
+					self.send_data(s, prepare_object_to_sending('Smth wrong with session, try later'))
+					return
+				spawn_index = random.choice(availible_spots)
 				self.sessions[session_id]['spawns'][spawn_index] = s
 				self.sessions[session_id]['scores'][spawn_index] = 0
 				self.send_data(s, prepare_object_to_sending({'spawn_index':spawn_index, 'level':self.sessions[session_id]['level'], 'session_id':session_id}))
@@ -160,6 +183,22 @@ class Server:
 
 	def get_availible_runes(self, session_id):
 		return [{'rune':self.sessions[session_id]['runes']['runes'][i]['is_placed'], 'coords':self.sessions[session_id]['runes']['runes'][i]['coords'], 'id':i} for i in self.sessions[session_id]['runes']['runes'] if self.sessions[session_id]['runes']['runes'][i]['is_placed'] != False]
+
+
+	def session_status_update(self, session_id:str):
+		if self.sessions[session_id]['session_status'] == 'waiting' or self.sessions[session_id]['session_status'].isnumeric():
+			if 'session_status_timer' not in self.sessions[session_id]:
+				if not self.sessions[session_id]['ranked'] or len(self.sessions[session_id]['players_data']) == self.sessions[session_id]['max_players']:
+						self.sessions[session_id]['session_status_timer'] = datetime.now()
+			elif (datetime.now() - self.sessions[session_id]['session_status_timer']).total_seconds() >= 4:
+				del self.sessions[session_id]['session_status_timer']
+				self.sessions[session_id]['session_status'] = 'running'
+			else:
+				self.sessions[session_id]['session_status'] = str(int(4 - (datetime.now() - self.sessions[session_id]['session_status_timer']).total_seconds()))
+		elif self.sessions[session_id]['session_status'] == 'running':
+			if self.sessions[session_id]['score_bound'] in [self.sessions[session_id]['scores'][k] for k in self.sessions[session_id]['scores']]:
+				self.sessions[session_id]['session_status'] = 'finished'
+				self.sessions[session_id]['finished_timer'] = datetime.now()
 
 
 	def process_players_data(self, s):
@@ -191,8 +230,11 @@ class Server:
 		self.sessions[session_id]['players_data'][s]['connection_time'] = datetime.now().timestamp()
 		self.sessions[session_id]['players_data'][s]['score'] = self.sessions[session_id]['scores'][self.players_data[s]['player_data']['spawn_index']]
 
+		if self.sessions[session_id]['ranked']:
+			self.sessions[session_id]['ranked_users'][s]['score'] = self.sessions[session_id]['players_data'][s]['score']
+
 		data = {'other_players':self.collect_other_players_data(s), 'player_info':player_info, 'timestamp':get_current_timestamp(),
-				'shoots':self.sessions[session_id]['shoots']}
+				'shoots':self.sessions[session_id]['shoots'], 'session_status':self.sessions[session_id]['session_status']}
 		self.send_data(s, prepare_object_to_sending(data))
 
 
@@ -222,8 +264,19 @@ class Server:
 				if (datetime.now() - self.sessions[session]['creation_time']).total_seconds() >= 20:
 					sessions_rm.append(session)
 
+			self.session_status_update(session_id = session)
+			if self.sessions[session]['session_status'] == 'finished' and (datetime.now() - self.sessions[session]['finished_timer']).total_seconds() > FINISHED_SESSION_TIMEOUT:
+				sessions_rm.append(session)
+				if self.sessions[session]['ranked']:
+					self.count_rankings(session)
+
 		for session in sessions_rm:
-			del self.sessions[session]
+			if session in self.sessions:
+				del self.sessions[session]
+
+
+	def count_rankings(self, session_id:str):
+		print(self.sessions[session_id]['ranked_users'])
 
 
 	def set_session_spawns_and_scores(self, session, index):
@@ -248,7 +301,6 @@ class Server:
 
 			for name in del_names:
 				del self.sessions[session]['shoots'][name]
-
 
 
 
@@ -311,10 +363,10 @@ class Server:
 
 			self.iteration += 1
 
-try:
-	Server().main()
-except KeyboardInterrupt:
-	exit()
-except Exception as e:
-	print(e)
-	input()
+#try:
+Server().main()
+#except KeyboardInterrupt:
+# 	exit()
+# except Exception as e:
+# 	print(e)
+# 	input()
