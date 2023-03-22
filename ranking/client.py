@@ -8,7 +8,7 @@ from constants import RANKED_SERVER_ADRESS
 
 class RankingClient(Client):
 	"""
-	Client class for player, supporting connection to stats server
+	Client class for player and server, supporting connection to stats server
 	"""
 
 	def __init__(self):
@@ -43,7 +43,7 @@ class RankingClient(Client):
 	def main_menu(self):
 		"""Main CLI menu for ranking system"""
 
-		attributes = ['quit', 'login']#, 'get_self_stats', 'get_top_players']
+		attributes = ['quit', 'login', 'create_user', 'get_self_stats', 'get_top_players']
 
 		while True:
 			print('\n', '\n'.join([f'{i} - {attributes[i]}' for i in range(len(attributes))]), sep='')
@@ -75,3 +75,38 @@ class RankingClient(Client):
 			self.user = {'username':username, 'password':password, 'stats':self.get_information()}
 
 		return result['status']
+
+
+	def get_self_stats(self):
+		"""Print general stats of loginned user"""
+
+		if self.user is None:
+			print('You are not logged in!')
+			return
+
+		self.send_information({'request':'get_user_stats', 'username':self.user['username']})
+		stats = self.get_information()
+
+		if stats['status']:
+			print(stats['content'])
+			return
+
+		stats = stats['content']
+		print(f'MMR:{stats["MMR"]}    Matches:{" ".join(list(map(str, stats["matches"])))}')
+
+
+	def get_top_players(self):
+		"""Recieves and prints string with top 10 players"""
+
+		self.send_information({'request':'get_top_players'})
+		print(self.get_information()['content'])
+
+
+	def create_user(self):
+		"""New user creation"""
+
+		username = input('Enter username -> ')
+		password = input('Enter password -> ')
+
+		self.send_information({'request':'create_user', 'username':username, 'password':password})
+		print(self.get_information()['content'])

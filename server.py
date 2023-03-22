@@ -13,6 +13,7 @@ import hashlib
 import sha256_hashsummer
 
 from datetime import datetime
+from ranking.client import RankingClient
 from network import prepare_object_to_sending, get_current_timestamp
 from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG,\
 						BEGIN_FLAG, END_FLAG, SHOOT_SAVE_DURATION, FINISHED_SESSION_TIMEOUT
@@ -20,7 +21,7 @@ from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG,\
 
 
 NO_VALIDATION = '--no-validation' in sys.argv
-RANKED_SERVER_SIGNATURE = '5ffce4f06df' #sys.argv[sys.argv.index('--signature') + 1]
+RANKED_SERVER_SIGNATURE = input('Enter ranked server signature -> ')
 
 
 class Server:
@@ -44,6 +45,8 @@ class Server:
 		self.sessions = {}
 		self.players_data = {}
 		self.unconfirmed_connections = {}
+
+		self.ranking_client = RankingClient()
 
 		print('binded')
 
@@ -276,7 +279,14 @@ class Server:
 
 
 	def count_rankings(self, session_id:str):
-		print(self.sessions[session_id]['ranked_users'])
+		if not self.ranking_client.connected_to_server:
+			return
+
+		users = []
+		for socket in self.sessions[session_id]['ranked_users']:
+			users.append(self.sessions[session_id]['ranked_users'][socket])
+
+		self.ranking_client.send_information({'request':'count_rankings', 'signature':RANKED_SERVER_SIGNATURE, 'users':users})
 
 
 	def set_session_spawns_and_scores(self, session, index):
@@ -287,7 +297,7 @@ class Server:
 	def update_sessions(self):
 		now = datetime.now()
 		for session in self.sessions:
-			if (now - self.sessions[session]['runes']['timer']).total_seconds() >= RUNES_CONFIG['spawn_timer']:
+			if (now - self.sessions[session]['runes']['timer']).total_seconds() >= RUNES_CONFIG['spawn_timer'] and self.sessions[session]['session_status'] == 'running':
 				self.sessions[session]['runes']['timer'] = now
 				availible_spots = [i for i in self.sessions[session]['runes']['runes'] if self.sessions[session]['runes']['runes'][i]['is_placed'] == False]
 				if availible_spots:
