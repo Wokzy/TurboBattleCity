@@ -9,7 +9,7 @@ def get_sum_of_file(filename):
 
 	return hashlib.sha256(data).hexdigest()
 
-def sum_files_with_extention(extentions=['.py', '.png', '.exe'], dirs=[], solt=0):
+def sum_files_with_extention(extentions=['.png', '.exe'], dirs=[], solt=0):
 	import os
 	import hashlib
 	#string = '{solt}'
