@@ -20,7 +20,7 @@ from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG,\
 
 
 
-NO_VALIDATION = '--no-validation' in sys.argv
+NO_VALIDATION = True #'--no-validation' in sys.argv
 RANKED_SERVER_SIGNATURE = input('Enter ranked server signature -> ')
 
 

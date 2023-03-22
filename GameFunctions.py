@@ -76,7 +76,7 @@ class GameFunctions:
 						self.nickname = self.nickname_string = self.ranking.user["username"]
 
 					options = '1 - show sessions\n' + '2 - create session\n' + '3 - connect to session\n' + '4 - change nickname\n' + \
-								'5 - map preview\n' + '6 - observe game\n' + '7 - ranking system menu\n' + '0 - leave\n'
+								'5 - map preview\n' + '6 - ranking system menu\n' + '0 - leave\n'
 					ch = input(options)
 
 					socket.send('get_sessions_info'.encode(ENCODING))
@@ -94,12 +94,12 @@ class GameFunctions:
 					elif ch == '5':
 						self.map_preview()
 						return 'map_preview'
-					elif ch == '6':
-						return self.observe_session(socket, sessions_info, get_information)
-					elif ch == '7' and self.ranking.connected_to_server:
+					elif ch == '6' and self.ranking.connected_to_server:
 						self.ranking.main_menu()
 					elif ch == '0':
 						return 'leave'
+					#elif ch == '6':
+					#	return self.observe_session(socket, sessions_info, get_information)
 
 
 	def show_avalible_sessions(self, sessions_info):
