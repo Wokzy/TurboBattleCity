@@ -1,7 +1,13 @@
 """
 Main game server based on TCP TLS
 """
+import os
 
+LOCAL_DIRECTORY = '' # Especially for server, script will enter this dir to find TLS certificate and config
+if LOCAL_DIRECTORY == '':
+	print('local directory in not specifyed, skipping')
+else:
+	os.chdir(LOCAL_DIRECTORY)
 
 import sys
 import ssl
@@ -15,7 +21,7 @@ import sha256_hashsummer
 from datetime import datetime
 from ranking.client import RankingClient
 from network import prepare_object_to_sending, get_current_timestamp
-from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG,\
+from constants import SERVER_PORT, SERVER_IP, ENCODING, RUNES_CONFIG, CERTIFICATE,\
 						BEGIN_FLAG, END_FLAG, SHOOT_SAVE_DURATION, FINISHED_SESSION_TIMEOUT
 
 
@@ -31,7 +37,7 @@ class Server:
 
 		context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 		# context.load_cert_chain('tbc_cert.pem', 'tbc_key.pem')
-		context.load_cert_chain('certificate.pem')
+		context.load_cert_chain(CERTIFICATE)
 
 		self.sock = context.wrap_socket(self.sock, server_side=True)
 		#self.sock = ssl.wrap_socket(self.sock, server_side=True, certfile="tbc_cert.pem", keyfile="tbc_key.pem")
@@ -63,8 +69,11 @@ class Server:
 		if s in self.outputs:
 			self.outputs.remove(s)
 		self.inputs.remove(s)
-		s.shutdown(socket.SHUT_RDWR)
-		s.close()
+		try:
+			s.shutdown(socket.SHUT_RDWR)
+			s.close()
+		except OSError:
+			pass
 		if s in self.players_data:
 			del self.players_data[s]
 

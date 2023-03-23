@@ -1,8 +1,10 @@
 import json
 
 GAME_NAME = 'Turbo Batlle City'
-GAME_VERSION = 'Development patch' # Development patch
+GAME_VERSION = 'v1.0.0:2'
 
+
+CERTIFICATE = 'certificate.pem'
 CONFIG_FILE = 'config.json'
 
 ENCODING = 'utf-8'
